@@ -1,4 +1,4 @@
-# R4DS R para Ciencia de Datos Club de Lectura
+# R4DS R para Ciencia de Datos Club de Lectura <img src="https://es.r4ds.hadley.nz/hex_r4ds-es.png" alt="r4ds-es-logo" align="right" height=200px />
 
 Un grupo de lectura semanal siguiendo los capítulos de [R para Ciencia de Datos de Garrett Grolemund y Hadley Wickham](https://es.r4ds.hadley.nz/)
 
