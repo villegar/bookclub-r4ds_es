@@ -1,38 +1,41 @@
 # R4DS R para Ciencia de Datos Club de Lectura
 
-A weekly reading group following the chapters of [R para Ciencia de Datos by Garrett Grolemund & Hadley Wickham](https://es.r4ds.hadley.nz/)
+Un grupo de lectura semanal siguiendo los capítulos de [R para Ciencia de Datos de Garrett Grolemund y Hadley Wickham](https://es.r4ds.hadley.nz/)
 
-Visit the [#book_club-r_for_data_science channel](https://r4ds.io/join) on Slack to join the video chat! 
+¡Visita el canal [#book_club-r_for_data_science](https://r4ds.io/join) en Slack para unirte a las videollamadas! 
 
-This repo contains 3 main folders:
+Este repositorio tiene 3 directorios principales:
 
-- Presentations: each week a presenter will give a talk summarizing the chapter and/or discussing practical applications of the topic at hand. 
+- Presentaciones: cada semana unx miembro resumirá el capítulo correspondiente y/o discutirá aplicaciones prácticas del tema en cuestión.
 
-- QandA: A collection of questions (and answers) on the chapters that come up during meetings (or between!)
+- PyR: Una colección de preguntas (y respuestas) sobre los capítulos que surgieron durante las reuniones (o después).
 
-- Data: Example datasets are stored in this folder to help facilitate practical applications!
+- Datos: Ejemplares de datasets serán almacenados en este directorio para facilitar la presentación de aplicaciones prácticas.
 
 
-#### Some helpful links: 
-- GitHub navigation: [GitHub Web Editor](https://youtu.be/d41oc2OMAuI) | [GitHub Local Setup](https://www.youtube.com/watch?v=hNUNPkoledI)
+#### Recursos útiles: 
+- Navegación de GitHub: [Editor Web](https://youtu.be/d41oc2OMAuI) | [Configuración Local](https://www.youtube.com/watch?v=hNUNPkoledI)
 
-### Meeting Schedule 
+### Horario de Reuniones
 
-*Cohort 1 - (started 2020-12-15) - Tuesdays, 4pm C(D)T*
+*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2020-12-15 - Chapter 1 & 2 - Introducción: Lau Pereyra
-- 2020-12-22 - Chapter 3 - Visualización de datos
+- 2020-12-22 - Capítulo 1 y 2 - Introducción: Lau Pereyra
+- 2020-12-29 - Capítulo 3 - Visualización de datos: Roberto Villegas-Diaz
 
 <details>
-  <summary> Future Meetings </summary>
+  <summary> Reuniones futuras </summary>
 
-- 2020-12-29 - Chapter 4 - Flujo de trabajo: conocimientos básicos
+- 2020-01-05 - Capítulo 4 - Flujo de trabajo: conocimientos básicos
+- 2020-01-12 - Capítulo 5 - Transformación de datos
+- 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
+- 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
 
 </details>
 <hr>
 
-### Presentations & Recordings
+### Presentaciones y Grabaciones
 
-Chapter 1-2 Introducción 
+Capítulo 1-2 Introducción 
 
-- Cohort 1: Lau Pereyra (SLIDES | VIDEO)
+- Cohorte 1: Lau Pereyra (DIAPOSITIVAS | VIDEO)
