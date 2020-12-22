@@ -20,7 +20,6 @@ Este repositorio tiene 3 directorios principales:
 
 *Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2020-12-22 - Capítulo 1 y 2 - Introducción: Lau Pereyra
 - 2020-12-29 - Capítulo 3 - Visualización de datos: Roberto Villegas-Diaz
 
 <details>
@@ -36,6 +35,10 @@ Este repositorio tiene 3 directorios principales:
 
 ### Presentaciones y Grabaciones
 
-Capítulo 1-2 Introducción 
+Capítulos 1-2 Introducción 
 
 - Cohorte 1: Lau Pereyra (DIAPOSITIVAS | VIDEO)
+
+Capítulo 3  Visualización de datos
+
+- Cohorte 1: Roberto Villegas-Diaz (DIAPOSITIVAS | VIDEO)
