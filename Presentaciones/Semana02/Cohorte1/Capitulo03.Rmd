@@ -6,12 +6,14 @@ date: 2020-12-29
 output:
   xaringan::moon_reader:
     nature:
+      highlightStyle: github
       highlightLines: true
       beforeInit: macros.js
     lib_dir: libs
     css: xaringan-themer.css
     includes:
       after_body: insertar-r4ds-es-logo.html
+    ratio: '16:9'
 ---
 
 
@@ -21,6 +23,20 @@ xaringanthemer::style_mono_light(
   header_font_google = xaringanthemer::google_font("Josefin Sans"),
   text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
   code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  fig.path = "figuras/",
+  message = FALSE,
+  warning = FALSE,
+  out.width = "100%",
+  fig.retina = 3,
+  fig.align = 'center',
+  dpi = 300,
+  dev = 'svg'
 )
 ```
 
@@ -42,9 +58,75 @@ xaringanthemer::style_mono_light(
 Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
 que ser instalados:
 
-```{R, eval = FALSE}
+```{r}
 if (!require(tidyverse))
   install.packages("tidyverse")
 if (!require(datos))
   install.packages("datos")
 ```
+
+---
+
+## Primeros pasos
+
+Una generalización de un gráfico:
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>))
+```
+
+<!-- Pregunta de interes: -->
+
+<!-- > ¿los automóviles con motores grandes consumen más combustible que los -->
+<!-- automóviles con motores pequeños? -->
+
+```{r simple, out.height = '330px'}
+ggplot(data = millas) +
+  geom_point(mapping = aes(x = cilindrada, y = autopista))
+```
+
+---
+
+### 3.2.4 Ejercicios
+
+1. Ejecuta `ggplot(data = millas)`. ¿Qué observas?
+
+2. ¿Cuántas filas hay en millas? ¿Cuántas columnas?
+
+3. ¿Qué describe la variable `traccion`? Lee la ayuda de `?millas` para encontrar la respuesta.
+
+4. Realiza un gráfico de dispersión de `autopista` versus `cilindros`.
+
+5. ¿Qué sucede cuando haces un gráfico de dispersión (scatterplot) de `clase` versus `traccion`? ¿Por qué no es útil este gráfico?
+
+---
+## Mapeos estéticos
+
+---
+
+## Problemas comunes
+
+---
+
+## Separar en facetas
+
+---
+
+## Objetos geométricos
+
+---
+
+## Transformaciones estadísticas
+
+---
+
+## Ajustes de posición
+
+---
+
+## Sistemas de coordenadas
+
+---
+
+## La grámatica de gráficos en capas
+
