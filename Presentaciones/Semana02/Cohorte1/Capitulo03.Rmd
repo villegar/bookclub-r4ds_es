@@ -102,6 +102,39 @@ ggplot(data = millas) +
 ---
 ## Mapeos estéticos
 
+Incluye: tamaño, forma, color, transparencia, etc.
+
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>, <MAPEOS_ESTÉTICOS>))
+```
+
+Alternativamente, las estéticas pueden ser independientes de los datos mapeados:
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>), <ESTÉTICAS>)
+```
+
+---
+
+### 3.3.1 Ejercicios
+
+1. ¿Qué no va bien en este código? ¿Por qué hay puntos que no son azules?
+```{r eval = FALSE}
+ggplot(data = millas) +
+  geom_point(mapping = aes(x = cilindrada, y = autopista, color = "blue"))
+```
+
+2. ¿Qué variables en `millas` son categóricas? ¿Qué variables son continuas? (Pista: escribe `?millas` para leer la documentación de ayuda para este conjunto de datos). ¿Cómo puedes ver esta información cuando ejecutas `millas`?
+
+3. Asigna una variable continua a `color`, `size`, y `shape`. ¿Cómo se comportan estas estéticas de manera diferente para variables categóricas y variables continuas?
+
+4. ¿Qué ocurre si asignas o mapeas la misma variable a múltiples estéticas?
+
+5. ¿Qué hace la estética `stroke`? ¿Con qué formas trabaja? (Pista: consulta `?geom_point`)
+
+6. ¿Qué ocurre si se asigna o mapea una estética a algo diferente del nombre de una variable, como `aes(color = cilindrada < 5)`?
+
 ---
 
 ## Problemas comunes
