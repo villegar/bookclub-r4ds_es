@@ -42,3 +42,5 @@ Capítulos 1-2 Introducción
 Capítulo 3  Visualización de datos
 
 - Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03.html) | VIDEO)
+  
+  Ejercicios y soluciones: [Parte 1](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03-ejercicios/Capitulo03-ejercicios.html) | [Parte 2](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03-ejercicios/Capitulo03-ejercicios-parte2.html)
