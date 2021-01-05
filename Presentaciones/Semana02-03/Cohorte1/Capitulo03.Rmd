@@ -1,0 +1,387 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 3: Visualización de datos"
+author: "Roberto Villegas-Diaz (GH/villegar)"
+date: 2020-12-29 y 2021-01-05
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+    ratio: '16:9'
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  fig.path = "figuras/",
+  message = FALSE,
+  warning = FALSE,
+  out.width = "100%",
+  fig.retina = 3,
+  fig.align = 'center',
+  dpi = 300,
+  dev = 'svg'
+)
+```
+
+## Contenidos
+
+* Primeros pasos
+* Mapeos estéticos
+* Problemas comunes
+* Separar en facetas
+* Objetos geométricos
+* Transformaciones estadísticas
+* Ajustes de posición
+* Sistemas de coordenadas
+* La grámatica de gráficos en capas
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r}
+if (!require(tidyverse))
+  install.packages("tidyverse")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## Primeros pasos
+
+Una generalización de un gráfico:
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>))
+```
+
+<!-- Pregunta de interes: -->
+
+<!-- > ¿los automóviles con motores grandes consumen más combustible que los -->
+<!-- automóviles con motores pequeños? -->
+
+```{r simple, out.height = '330px'}
+ggplot(data = millas) +
+  geom_point(mapping = aes(x = cilindrada, y = autopista))
+```
+
+---
+
+### 3.2.4 Ejercicios
+
+1. Ejecuta `ggplot(data = millas)`. ¿Qué observas?
+
+2. ¿Cuántas filas hay en millas? ¿Cuántas columnas?
+
+3. ¿Qué describe la variable `traccion`? Lee la ayuda de `?millas` para encontrar la respuesta.
+
+4. Realiza un gráfico de dispersión de `autopista` versus `cilindros`.
+
+5. ¿Qué sucede cuando haces un gráfico de dispersión (scatterplot) de `clase` versus `traccion`? ¿Por qué no es útil este gráfico?
+
+---
+## Mapeos estéticos
+
+Incluye: tamaño, forma, color, transparencia, etc.
+
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>, <MAPEOS_ESTÉTICOS>))
+```
+
+Alternativamente, las estéticas pueden ser independientes de los datos mapeados:
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM>(mapping = aes(<MAPEOS>), <ESTÉTICAS>)
+```
+
+---
+
+### 3.3.1 Ejercicios
+
+1. ¿Qué no va bien en este código? ¿Por qué hay puntos que no son azules?
+```{r eval = FALSE}
+ggplot(data = millas) +
+  geom_point(mapping = aes(x = cilindrada, y = autopista, color = "blue"))
+```
+
+2. ¿Qué variables en `millas` son categóricas? ¿Qué variables son continuas? (Pista: escribe `?millas` para leer la documentación de ayuda para este conjunto de datos). ¿Cómo puedes ver esta información cuando ejecutas `millas`?
+
+3. Asigna una variable continua a `color`, `size`, y `shape`. ¿Cómo se comportan estas estéticas de manera diferente para variables categóricas y variables continuas?
+
+4. ¿Qué ocurre si asignas o mapeas la misma variable a múltiples estéticas?
+
+5. ¿Qué hace la estética `stroke`? ¿Con qué formas trabaja? (Pista: consulta `?geom_point`)
+
+6. ¿Qué ocurre si se asigna o mapea una estética a algo diferente del nombre de una variable, como `aes(color = cilindrada < 5)`?
+
+---
+
+## Problemas comunes
+
+1. Olvidar "cerrar' paréntesis.
+2. Mezclar double comillas y apóstrofe.
+3. Colocar el `+` en la línea equivocada
+4. Y muchos más.
+
+.center[![:escala 50%](imagenes/yoda.jpg)]
+
+---
+
+## Separar en facetas
+
+Facetas ~ sub-gráficos que muestran subconjuntos de los datos.
+
+* Una variable: `facet_wrap`
+    
+  ```{r, eval = FALSE}
+  facet_wrap(~ VARIABLE_CATEGÓRICA, nrow = FILAS)
+  ```
+    
+* Dos variables: `facet_grid`
+    
+  ```{r, eval = FALSE}
+  facet_grid(VARIABLE_CATEGÓRICA_1 ~ VARIABLE_CATEGÓRICA_2)
+  ```
+
+---
+
+### 3.5.1 Ejercicios
+
+(1.) ¿Qué ocurre si intentas separar en facetas una variable continua?
+
+(2.) ¿Qué significan las celdas vacías que aparecen en el gráfico generado usando `facet_grid(traccion ~ cilindros)`? ¿Cómo se relacionan con este gráfico?
+  ```{r, eval = FALSE}
+  ggplot(data = millas) +
+    geom_point(mapping = aes(x = traccion, y = cilindros))
+  ```
+
+(3.) ¿Qué grafica el siguiente código? ¿Qué hace `.`?
+  ```{r, eval = FALSE}
+  ggplot(data = millas) +
+    geom_point(mapping = aes(x = cilindrada, y = autopista)) +
+    facet_grid(traccion ~ .)
+  
+  ggplot(data = millas) +
+    geom_point(mapping = aes(x = cilindrada, y = autopista)) +
+    facet_grid(. ~ cilindros)
+  ```
+
+---
+### 3.5.1 Ejercicios (2)
+
+(4.) Mira de nuevo el primer gráfico en facetas presentado en esta sección:
+  ```{r, eval = FALSE}
+  ggplot(data = millas) +
+    geom_point(mapping = aes(x = cilindrada, y = autopista)) +
+    facet_wrap(~ clase, nrow = 2)
+  ```
+  ¿Cuáles son las ventajas de separar en facetas en lugar de aplicar una estética de color? ¿Cuáles son las desventajas? ¿Cómo cambiaría este balance si tuvieras un conjunto de datos más grande?
+
+(5.) Lee `?facet_wrap`. ¿Qué hace `nrow`? ¿Qué hace `ncol`? ¿Qué otras opciones controlan el diseño de los paneles individuales? ¿Por qué `facet_grid()` no tiene argumentos `nrow` y `ncol`?
+
+(6.) Cuando usas `facet_grid()`, generalmente deberías poner la variable con un mayor número de niveles únicos en las columnas. ¿Por qué?
+
+---
+
+## Objetos geométricos
+
+Objetos geométricos ~ `ggplot2::geom_XYZ(...)`
+
+__Importante:__ "... no todas las estéticas funcionan con todos los geom."
+
+* Biblioteca de paquetes que extienden `ggplot2`: https://exts.ggplot2.tidyverse.org/gallery/
+
+* Hoja de referencia: [https://github.com/rstudio/cheatsheets](https://github.com/rstudio/cheatsheets/raw/master/translations/spanish/ggplot2.pdf)
+
+Multiples objetos geométricos pueden ser representados en la misma gráfica:
+```{r eval = FALSE}
+ggplot(data = <DATOS>) +
+  <FUNCIÓN_GEOM_1>(mapping = aes(<MAPEOS>, <MAPEOS_ESTÉTICOS>)) + 
+  <FUNCIÓN_GEOM_2>(mapping = aes(<MAPEOS>, <MAPEOS_ESTÉTICOS>)) + 
+  .
+  .
+  .
+  <FUNCIÓN_GEOM_N>(mapping = aes(<MAPEOS>, <MAPEOS_ESTÉTICOS>)) 
+```
+---
+
+### 3.6.1 Ejercicios
+
+(1.) ¿Qué geom usarías para generar un gráfico de líneas? ¿Y para un diagrama de caja? ¿Y para un histograma? ¿Y para un gráfico de área?
+
+(2.) Ejecuta este código en tu mente y predice cómo se verá el output. Luego, ejecuta el código en R y verifica tus predicciones.
+  ```{r, eval = FALSE}
+  ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista, color = traccion)) +
+    geom_point() +
+    geom_smooth(se = FALSE)
+  ```
+
+(3.) ¿Qué muestra `show.legend = FALSE`? ¿Qué pasa si lo quitas? ¿Por qué crees que lo utilizamos antes en el capítulo?
+
+(4.) ¿Qué hace el argumento `se` en `geom_smooth()`?
+
+---
+
+### 3.6.1 Ejercicios (2)
+
+(5.) ¿Se verán distintos estos gráficos? ¿Por qué sí o por qué no?
+  ```{r, eval = FALSE}
+  ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista)) +
+  geom_point() +
+  geom_smooth()
+
+ggplot() +
+  geom_point(data = millas, mapping = aes(x = cilindrada, y = autopista)) +
+  geom_smooth(data = millas, mapping = aes(x = cilindrada, y = autopista))
+  ```
+
+(6.) Recrea el código R necesario para generar los siguientes gráficos:
+
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-1.png)
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-2.png)
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-3.png)
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-4.png)
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-5.png)
+![:escala 25%](https://es.r4ds.hadley.nz/03-visualize_files/figure-html/unnamed-chunk-30-6.png)
+---
+
+## Transformaciones estadísticas
+
+![](https://es.r4ds.hadley.nz/diagrams_w_text_as_path/es/visualization-stat-bar.svg)
+
+"Por lo general, puedes usar geoms y estadísticas de forma intercambiable"
+
+Los siguientes códigos generan la misma salida:
+```{r, eval = FALSE}
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte))
+```
+
+```{r, eval = FALSE}
+ggplot(data = diamantes) +
+  stat_count(mapping = aes(x = corte))
+```
+
+---
+
+### 3.7.1 Ejercicios
+1. ¿Cuál es el geom predeterminado asociado con `stat_summary()`? ¿Cómo podrías reescribir el gráfico anterior para usar esa función geom en lugar de la función stat?
+
+2. ¿Qué hace `geom_col()`? ¿En qué se diferencia de `geom_bar()`?
+
+3. La mayoría de los geoms y las transformaciones estadísticas vienen en pares que casi siempre se usan en conjunto. Lee la documentación y haz una lista de todos los pares. ¿Qué tienen en común?
+
+4. ¿Qué variables calcula `stat_smooth()`? ¿Qué parámetros controlan su comportamiento?
+
+5. En nuestro gráfico de barras de proporción necesitamos establecer `group = 1`. ¿Por qué? En otras palabras, ¿cuál es el problema con estos dos gráficos?
+  ```{r, eval = FALSE}
+  ggplot(data = diamantes) +
+    geom_bar(mapping = aes(x = corte, y = ..prop..))
+  
+  ggplot(data = diamantes) +
+    geom_bar(mapping = aes(x = corte, fill = color, y = ..prop..))
+  ```
+---
+
+## Ajustes de posición
+
+Más allá de `color`:
+
+.center[![:escala 80%](imagenes/bob-esponja.jpg)]
+
+También tenemos a nuestro alcance opciones como `fill` (rellenar), `position` (posición), y `alpha` (transparencia).
+
+---
+
+### 3.8.1 Ejercicios
+
+1. ¿Cuál es el problema con este gráfico? ¿Cómo podrías mejorarlo?
+  ```{r, eval = FALSE}
+  ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+    geom_point()
+  ```
+
+2. ¿Qué parámetros de `geom_jitter()` controlan la cantidad de ruido?
+
+3. Compara y contrasta `geom_jitter()` con `geom_count()`
+
+4. ¿Cuál es el ajuste de posición predeterminado de `geom_boxplot()`? Crea una visualización del conjunto de datos de `millas` que lo demuestre.
+
+---
+
+## Sistemas de coordenadas
+
+Comandos útiles:
+
+* `coord_flip()` cambia los ejes `x` y `y`.
+
+* `coord_quickmap()` establece correctamente la relación de aspecto para los mapas.
+
+* `coord_polar()` usa coordenadas polares
+
+---
+
+### 3.9.1 Ejercicios
+
+1. Convierte un gráfico de barras apiladas en un gráfico circular usando `coord_polar()`.
+
+2. ¿Qué hace `labs()`? Lee la documentación.
+
+3. ¿Cuál es la diferencia entre `coord_quickmap()` y `coord_map()`?
+
+4. ¿Qué te dice la gráfica siguiente sobre la relación entre `ciudad` y `autopista`? ¿Por qué es `coord_fixed()` importante? ¿Qué hace `geom_abline()`?
+  ```{r, eval = FALSE}
+  ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+    geom_point() +
+    geom_abline() +
+    coord_fixed()
+  ```
+
+---
+
+## La grámatica de gráficos en capas
+
+Y con esto ya tenemos suficientes "ingredientes" par empezar a "cocinar" nuestros gráficos.
+
+```{r, eval = FALSE}
+ggplot(data = <DATOS>) +
+ <GEOM_FUNCIÓN>(
+   mapping = aes(<MAPEOS>),
+   stat = <ESTADÍSTICAS>,
+   position = <POSICIÓN>
+ ) +
+ <FUNCIÓN_COORDENADAS> +
+ <FUNCIÓN_FACETAS>
+```
+
+---
+background-image: url(https://www.memesmonkey.com/images/memesmonkey/5f/5f05b9bf67e7d3744d81a54a8f5fc2ce.jpeg)
+background-position: center
+background-size: contain
+class:: inverse
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?

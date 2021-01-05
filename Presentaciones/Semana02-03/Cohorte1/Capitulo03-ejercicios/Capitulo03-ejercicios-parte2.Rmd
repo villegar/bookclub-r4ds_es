@@ -1,0 +1,254 @@
+---
+title: "Capítulo 3: Visualización de datos - Ejercicios - Parte 2"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(datos)
+# knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 3.7.1
+
+1. ¿Cuál es el geom predeterminado asociado con `stat_summary()`? ¿Cómo podrías reescribir el gráfico anterior para usar esa función geom en lugar de la función stat?
+
+El "gráfico anterior" se refiere a
+```{r 3_7_1_1_0}
+ggplot(data = diamantes) +
+  stat_summary(
+    mapping = aes(x = corte, y = profundidad),
+    fun.min = min,
+    fun.max = max,
+    fun = median
+  )
+```
+
+```{r 3_7_1_1_1, exercise=TRUE}
+?stat_summary
+# pointrange
+```
+
+```{r 3_7_1_1_2, exercise=TRUE}
+ggplot(data = diamantes) +
+  geom_pointrange(mapping = aes(x = corte, y = profundidad),
+                  stat = "summary",
+                  fun.min = min,
+                  fun.max = max,
+                  fun = median)
+```
+
+2. ¿Qué hace `geom_col()`? ¿En qué se diferencia de `geom_bar()`?
+
+```{r 3_7_1_2_1, exercise=TRUE}
+?geom_col
+# stat_identity()
+# Require x e y
+```
+
+```{r 3_7_1_2_2, exercise=TRUE}
+?geom_bar
+# stat_count()
+# Solo require x
+```
+
+3. La mayoría de los geoms y las transformaciones estadísticas vienen en pares que casi siempre se usan en conjunto. Lee la documentación y haz una lista de todos los pares. ¿Qué tienen en común?
+
+```{r 3_7_1}
+# Listar todos los objetos exportados por ggplot2
+objetos <- getNamespaceExports("ggplot2")
+geoms <- objetos[grepl("geom_", objetos)]
+stats <- objetos[grepl("stat_", objetos)]
+
+# Encontrar los que tienen el mismo sufijo
+geoms_filtrados <- sort(geoms[geoms %in% paste0("geom_", gsub("stat_", "", stats))])
+stats_filtrados <- paste0("stat_", gsub("geom_", "", geoms_filtrados))
+pares <- tibble::tibble(geoms = geoms_filtrados,
+                        stats = stats_filtrados)
+knitr::kable(pares, "html")
+
+# Los que tienen diferente sufijo
+knitr::kable(tibble::tibble(geoms = c("geom_bar",
+                                      "geom_count",
+                                      "geom_dotplot",
+                                      "geom_violin"),
+                            stats = c("stat_count",
+                                      "stat_sum",
+                                      "stat_bindot",
+                                      "stat_ydensity")), "html")
+```
+
+```{r 3_7_1_3, exercise=TRUE}
+
+```
+
+4. ¿Qué variables calcula `stat_smooth()`? ¿Qué parámetros controlan su comportamiento?
+
+```{r 3_7_1_4, exercise=TRUE}
+?stat_smooth
+```
+
+__Calcula:__
+
+- `y`: valor predecido
+- `ymin`: valor mínimo del intervalo de confianza
+- `ymax`: valor máximo del intervalo de confianza
+- `se`: error estándar
+
+
+__Parámetros:__
+
+- `method`: `loess`, `lm`, `MASS::rlm`, etc.
+- `formula`: `y ~ x`
+- `method.arg`: Argumentos para el método
+- `se`: Booleano, mostrar intervalo de confianza
+- `na.rm`: Booleano, remover `NA`s
+
+5. En nuestro gráfico de barras de proporción necesitamos establecer `group = 1`. ¿Por qué? En otras palabras, ¿cuál es el problema con estos dos gráficos?
+
+```{r 3_7_1_5, exercise=TRUE}
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte, y = ..prop..))
+
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte, fill = color, y = ..prop..))
+```
+
+Sin `group = 1` las proporciones son calculadas para cada grupo (cada barra), por ello todas las barras tienen altura 1.
+
+```{r 3_7_1_5_2, exercise=TRUE}
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte, y = ..prop.., group = 1))
+```
+
+Ahora las proporciones son calculadas para todos los grupos (todas las barras).
+
+En la otra mano, tenemos el gráfico con relleno. 
+Para obtener el resultado deseado, cada barra tiene que ser normalizada:
+
+```{r 3_7_1_5_4, exercise=TRUE}
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte, fill = color, y = ..count.. / sum(..count..)))
+```
+
+## 3.8.1
+
+1. ¿Cuál es el problema con este gráfico? ¿Cómo podrías mejorarlo?
+
+```{r 3_8_1_1, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_point()
+```
+
+Dado que muchos puntos se overlapan, podríamos usar `position = "jitter"` para 
+añadir ruido a nuestros puntos:
+
+```{r 3_8_1_1_2, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_point(position = "jitter")
+```
+
+2. ¿Qué parámetros de `geom_jitter()` controlan la cantidad de ruido?
+
+```{r 3_8_1_2, exercise=TRUE}
+?geom_jitter()
+```
+
+__Parámetros:__
+
+- `width`: eje horizontal
+- `height`: eje vertical
+
+```{r 3_8_1_2_2, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_jitter(width = 0)
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_jitter(width = 20)
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_jitter(height = 0)
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_jitter(height = 20)
+```
+
+3. Compara y contrasta `geom_jitter()` con `geom_count()`
+
+```{r 3_8_1_3, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_jitter()
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_count()
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista, color = clase)) +
+  geom_count(position = "jitter")
+```
+
+4. ¿Cuál es el ajuste de posición predeterminado de `geom_boxplot()`? Crea una visualización del conjunto de datos de `millas` que lo demuestre.
+
+```{r 3_8_1_4, exercise=TRUE}
+?geom_boxplot()
+```
+
+```{r 3_8_1_4_2, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista, color = clase)) +
+  geom_boxplot()
+
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista, color = clase)) +
+  geom_boxplot(position = "identity")
+```
+
+## 3.9.1
+
+1. Convierte un gráfico de barras apiladas en un gráfico circular usando `coord_polar()`.
+
+```{r 3_9_1_1, exercise=TRUE}
+ggplot(millas, aes(x = factor(1), fill = traccion)) +
+  geom_bar()
+
+ggplot(millas, aes(x = factor(1), fill = traccion)) +
+  geom_bar(width = 1) +
+  coord_polar(theta = "y")
+```
+
+2. ¿Qué hace `labs()`? Lee la documentación.
+
+```{r 3_9_1_2, exercise=TRUE}
+?labs
+```
+
+```{r 3_9_1_2_2, exercise=TRUE}
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(y = "Millas por galón de combustible en autopista",
+       x = "Tipo de auto",
+       title = "Datos de economía de combustible",
+       subtitle = "1999-2008",
+       caption = "Fuente: http://fueleconomy.gov")
+```
+
+3. ¿Cuál es la diferencia entre `coord_quickmap()` y `coord_map()`?
+
+```{r 3_9_1_3, exercise=TRUE}
+?coord_quickmap
+?coord_map
+```
+
+4. ¿Qué te dice la gráfica siguiente sobre la relación entre `ciudad` y `autopista`? ¿Por qué es `coord_fixed()` importante? ¿Qué hace `geom_abline()`?
+
+```{r 3_9_1_4, exercise=TRUE}
+ggplot(data = millas, mapping = aes(x = ciudad, y = autopista)) +
+  geom_point() +
+  geom_abline() +
+  coord_fixed()
+```
+
+```{r 3_9_1_4_2, exercise=TRUE}
+?coord_fixed
+?geom_abline
+```
