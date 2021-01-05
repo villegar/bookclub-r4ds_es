@@ -37,7 +37,7 @@ Este repositorio tiene 3 directorios principales:
 
 Capítulos 1-2 Introducción 
 
-- Cohorte 1: Lau Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | VIDEO)
+- Cohorte 1: Lau Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | [Video](https://youtu.be/q2IquNe1mnw))
 
 Capítulo 3  Visualización de datos
 
