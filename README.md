@@ -25,10 +25,10 @@ Este repositorio tiene 3 directorios principales:
 <details>
   <summary> Reuniones futuras </summary>
 
-- 2020-01-05 - Capítulo 4 - Flujo de trabajo: conocimientos básicos
-- 2020-01-12 - Capítulo 5 - Transformación de datos
-- 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
-- 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
+- 2020-01-12 - Capítulo 4 - Flujo de trabajo: conocimientos básicos
+- 2020-01-19 - Capítulo 5 - Transformación de datos
+- 2020-01-26 - Capítulo 6 - Flujo de trabajo: Scripts
+- 2020-02-02 - Capítulo 7 - Análisis exploratorio de datos (EDA)
 
 </details>
 <hr>
@@ -37,8 +37,8 @@ Este repositorio tiene 3 directorios principales:
 
 Capítulos 1-2 Introducción 
 
-- Cohorte 1: Lau Pereyra (DIAPOSITIVAS | VIDEO)
+- Cohorte 1: Lau Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | VIDEO)
 
 Capítulo 3  Visualización de datos
 
-- Cohorte 1: Roberto Villegas-Diaz (DIAPOSITIVAS | VIDEO)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03.html) | VIDEO)
