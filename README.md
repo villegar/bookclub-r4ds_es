@@ -18,18 +18,21 @@ Este repositorio tiene 3 directorios principales:
 
 ### Horario de Reuniones
 
-*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
+*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 3pm C(D)T* / 9pm GMT
 
-- 2020-12-29 - Capítulo 3 - Visualización de datos: Roberto Villegas-Diaz
+- 2020-01-12 - Capítulo 4 - Flujo de trabajo: conocimientos básicos - Laura Pereyra
+- 2020-01-12 - Capítulo 5 - Transformación de datos (5.1 - 5.4) - Laura Pereyra
 
 <details>
   <summary> Reuniones futuras </summary>
-
-- 2020-01-12 - Capítulo 4 - Flujo de trabajo: conocimientos básicos
-- 2020-01-19 - Capítulo 5 - Transformación de datos
-- 2020-01-26 - Capítulo 6 - Flujo de trabajo: Scripts
-- 2020-02-02 - Capítulo 7 - Análisis exploratorio de datos (EDA)
-
+- 2020-01-19 - Capítulo 5 - Transformación de datos (5.5 - 5.7)
+- 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
+- 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
+- 2020-02-02 - Capítulo 8 - Flujo de trabajo: proyectos
+- 2020-02-09 - Capítulo 9 - Introducción
+- 2020-02-09 - Capítulo 10 - Tibbles
+- 2020-02-16 - Capítulo 11 - Importación de datos
+- 2020-02-23 - Capítulo 12 - Datos ordenados
 </details>
 <hr>
 
@@ -37,7 +40,7 @@ Este repositorio tiene 3 directorios principales:
 
 Capítulos 1-2 Introducción 
 
-- Cohorte 1: Lau Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | [Video](https://youtu.be/q2IquNe1mnw))
+- Cohorte 1: Laura Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | [Video](https://youtu.be/q2IquNe1mnw))
 
 Capítulo 3  Visualización de datos
 
