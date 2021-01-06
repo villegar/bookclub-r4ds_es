@@ -25,6 +25,7 @@ Este repositorio tiene 3 directorios principales:
 
 <details>
   <summary> Reuniones futuras </summary>
+  
 - 2020-01-19 - Capítulo 5 - Transformación de datos (5.5 - 5.7)
 - 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
 - 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
@@ -33,6 +34,7 @@ Este repositorio tiene 3 directorios principales:
 - 2020-02-09 - Capítulo 10 - Tibbles
 - 2020-02-16 - Capítulo 11 - Importación de datos
 - 2020-02-23 - Capítulo 12 - Datos ordenados
+
 </details>
 <hr>
 
