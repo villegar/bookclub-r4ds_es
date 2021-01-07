@@ -22,13 +22,12 @@ Este repositorio tiene 3 directorios principales:
 
 - 2020-01-12 - Capítulo 4 - Flujo de trabajo: conocimientos básicos - Laura Pereyra
 - 2020-01-12 - Capítulo 5 - Transformación de datos (5.1 - 5.4) - Laura Pereyra
-
-<details>
-  <summary> Reuniones futuras </summary>
-  
 - 2020-01-19 - Capítulo 5 - Transformación de datos (5.5 - 5.7)
 - 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
 - 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
+
+<details>
+  <summary> Reuniones futuras </summary>
 - 2020-02-02 - Capítulo 8 - Flujo de trabajo: proyectos
 - 2020-02-09 - Capítulo 9 - Introducción
 - 2020-02-09 - Capítulo 10 - Tibbles
