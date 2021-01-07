@@ -1,0 +1,184 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo XY: <descripción>"
+author: "<nombre> (@<twitter> / @<github>, etc.)"
+date: 2020-12-31
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+## Configuración
+Esta plantilla usa el paquete llamado `xaringan` desarrollado por Yihui Xie [https://github.com/yihui/xaringan](https://github.com/yihui/xaringan)
+
+Para instalarlo:
+```{r, eval = FALSE}
+install.packages("xaringan")
+```
+
+---
+## Título
+### Subtítulo
+#### Sub-subtítulo
+
+Cada diapositiva puede contener texto, código "en línea" como `print`, ó secciones completas de código:
+
+- Sin evaluar
+```{r, eval = FALSE}
+# Este cálculo requerira de muchas horas, no lo ejecute
+1 + 1
+```
+
+- Evaluado
+```{r}
+1 + 1
+```
+
+- Evaluado sin mostrar el código (útil para presentar resultados)
+```{r, echo = FALSE}
+1 + 1
+```
+
+---
+
+## Listas
+
+.pull-left[
+#### Ordenadas
+1. Elemento 1
+
+2. Elemento 2
+
+3. Elemento 3
+]
+
+.pull-right[
+#### No ordenadas
+- Elemento 1
+
+- Elemento 2
+
+- Elemento 3
+]
+
+---
+
+## Estructura
+- Para crear nuevas diapositvas, solo necesita incluir tres guiones consecutivos  
+
+`---` en el `*.Rmd`. 
+
+- Usando dos guiones `--` en el `*.Rmd` se pueden crear pausas/transiciones:
+
+--
+
+#### Sección 1
+
+--
+
+#### Sección 2
+
+--
+
+#### Sección 3
+
+--
+
+- Para agregar notas/pie de página, puede usar 
+```bash
+.footnote[<texto>]
+```
+
+.footnote[
+El CRAN tiene una gran cantidad de paquetes muy útiles.
+]
+---
+class: center, inverse, middle
+
+# Esta es una diapositiva de transición
+---
+
+### Expresiones matemáticas
+
+Si ha usado $\LaTeX$, esta notación le resultá muy familiar:
+
+```
+$$E = mc^2$$
+```
+
+$$E = mc^2$$
+
+
+---
+
+### Imágenes
+La notación para insertar imágenes es la siguiente:
+```
+![<descripcion>](<directorio> ó <URL>)
+```
+
+Por ejemplo:
+```
+![hex-logo](https://es.r4ds.hadley.nz/hex_r4ds-es.png)
+```
+
+Produce; sin embargo, la imagen es muy grande (vea la siguiente diapositiva para ver una solución)
+
+![hex-logo](https://es.r4ds.hadley.nz/hex_r4ds-es.png)
+
+---
+
+### Imágenes (2)]
+```{html}
+<img alt="hex-logo" 
+     src="https://es.r4ds.hadley.nz/hex_r4ds-es.png" 
+     width="200px" />
+```
+
+Produce
+
+<img alt="hex-logo" src="https://es.r4ds.hadley.nz/hex_r4ds-es.png" width="200px" />
+
+Alternativemente, se puede usar un macro de javascript (el código ya existe en el archivo llamado "macros.js"):
+
+```{html}
+![:escala 25%](<directorio> ó <URL>)
+```
+
+---
+
+## Gráficos
+
+```{r}
+plot(rnorm(100))
+```
+
+---
+
+## Tablas
+
+```{r}
+knitr::kable(head(mtcars))
+```
+
+---
+
+## Recursos adicionales
+Más detalles (en inglés): 
+
+https://bookdown.org/yihui/rmarkdown/xaringan.html
