@@ -1,0 +1,653 @@
+---
+title: |
+  | R para Ciencia de Datos 
+  | Club de Lectura r4ds
+  | Cap 5 
+date: 2020-01-12 16:22:01 GMT-5
+output: slidy_presentation
+bibliography: R_for_data_science.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r message = FALSE}
+
+library(datos)
+library(tidyverse)
+library(knitr)
+library(modeest)
+library(naniar)
+library(timetk)
+```
+
+# Transformación de datos
+
+En [@grolemund_r_2019, Cap 5] aprenderás a transformar tus datos con `dplyr`. Por ejemplo podrás:
+
+- Crear algunas variables nuevas o resúmenes
+- Cambiar el nombre de las variables
+- Reordenar las observaciones
+
+# Gramática para la manipulación de datos rectangulares
+
+## Clase de objeto que se usa
+
+- `tibble::tibble`
+
+## Principales verbos
+
+- `dplyr::filter()`
+- `dplyr::arrange()`
+- `dplyr::select()`
+- `dplyr::mutate()`
+- `dplyr::summarize()`
+
+## Verbo principal para agrupaciones
+
+- `dplyr::group_by()`
+
+## Principal operador para encadenar y facilitar la lectura del código
+
+- `%>%` (paquete `magrittr`)
+
+# `tibble`
+
+- Por ahora las tibbles las definiremos como data frames con propiedades adicionales:
+
+```{r echo=TRUE}
+
+class(x = datos::vuelos)
+```
+
+```{r echo=TRUE}
+
+datos::vuelos
+```
+
+- Para más información ver [@grolemund_r_2019, Cap 10] y https://tibble.tidyverse.org/reference/tbl_df-class.html 
+
+# `filter`
+
+Aplica para filas: se seleccionan filas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+x_0 <- c(0, 0, 1, 1)
+y_0 <- c(0, 1, 1, 0)
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0 + 4, x_0 + 5, x_0 + 6), 
+       y     = c(y_0    , y_0    , y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1,
+                 y_0 + 2, y_0 + 2, y_0 + 2,
+                 y_0 + 3, y_0 + 3, y_0 + 3,
+                 y_0    , y_0    , y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1),
+       group = c(rep(1, 12), 
+                 rep(2, 12),
+                 rep(3, 12),
+                 rep(4, 12),
+                 rep(5, 12),
+                 rep(6, 12)) %>% as.character()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 1),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
+                               "#a6cee3", "#33a02c")) +
+  coord_fixed(ratio = 1) + 
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+filter(data = <DATOS>, <EXPRESION QUE RETORNE UN VALOR LOGICO>)
+```
+
+- Se requiere conocer el funcionamiento de los operadores lógicos
+
+    + https://stat.ethz.ch/R-manual/R-devel/library/base/html/Logic.html
+
+# `filter`
+
+```{r echo=TRUE, eval=FALSE}
+
+filter(.data = datos::vuelos, mes == 1, dia == 1)
+
+# Es equivalente a:
+## Utilizar "," encadena las condiciones con "&"
+filter(.data = datos::vuelos, mes == 1 & dia == 1)
+```
+
+```{r}
+
+filter(.data = vuelos, mes == 1, dia == 1)
+```
+
+# `filter`
+
+## Comparaciones
+
+- `>` (mayor que), `>=` (mayor o igual que), `<` (menor que), `<=` (menor o igual que), `!=` (no igual) y `==` (igual).
+
+```{r echo=TRUE, eval=FALSE}
+
+# Vuelos que tuvieron un retraso de llegada de 1 o más horas
+# y volaron a Houston (IAH o HOU) 
+# y fueron operados por United, American o Delta (UA, AA o DL)
+# y partieron en invierno (julio, agosto y septiembre)
+# y no salieron tarde
+filter(.data = datos::vuelos,
+       atraso_llegada >= 60 &
+       (destino == "IAH" | destino == "HOU") &
+       (aerolinea == "UA" | aerolinea == "AA" | aerolinea == "DL") &
+       (mes == 7 | mes == 8 | mes == 9) &
+       (atraso_salida <= 0))
+```
+
+```{r }
+
+filter(.data = datos::vuelos,
+       atraso_llegada >= 60 &
+       (destino == "IAH" | destino == "HOU") &
+       (aerolinea == "UA" | aerolinea == "AA" | aerolinea == "DL") &
+       (mes == 7 | mes == 8 | mes == 9) &
+       (atraso_salida <= 0))
+```
+
+# `filter`
+
+## Operadores lógicos
+
+- `&` es “y”, `|` es “o” incluyente, `!` es “no”, `xor` es “o” excluyente 
+
+```{r fig.align='center', out.width="80%", fig.cap="Conjunto de operadores booleanos [@grolemund_r_2019, Fig 5.1]"}
+
+knitr::include_graphics(path = "https://es.r4ds.hadley.nz/diagrams_w_text_as_path/es/transform-logical.svg")
+```
+
+# `arrange`
+
+Aplica para filas: se reordenan las filas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0, x_0 + 1, x_0 + 2,
+                 x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0 + 4, x_0 + 5, x_0 + 6), 
+       y     = c(y_0    , y_0    , y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1,
+                 y_0 + 2, y_0 + 2, y_0 + 2,
+                 y_0 + 3, y_0 + 3, y_0 + 3,
+                 y_0    , y_0    , y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1,
+                 y_0 + 2, y_0 + 2, y_0 + 2,
+                 y_0 + 3, y_0 + 3, y_0 + 3),
+       group = c(rep(1, 12), 
+                 rep(2, 12),
+                 rep(3, 12),
+                 rep(4, 12),
+                 rep(5, 12),
+                 rep(6, 12),
+                 rep(7, 12),
+                 rep(8, 12)) %>% as.character()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 2),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
+                               "#a6cee3", "#33a02c", "#1f78b4", "#b2df8a")) +
+  coord_fixed(ratio = 1) + 
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+arrange(data = <DATOS>, <VARIABLES O FUNCIONES APLICADAS A VARIABLES>)
+```
+
+# `arrange`
+
+- El orden en que se seleccionan las variables importan donde una variable adicional a la derecha se utiliza para desempatar
+
+- El ordenamiento por defecto se presenta de forma ascendente
+
+    + Si se desea un ordenamiento de forma descendente utilizar `dplyr::desc`
+
+- Los valores `NA` y `NaN` siempre se ordenan al final incluso si se utiliza `dplyr::desc`
+
+- Por defecto se ignora cualquier agrupamiento al utilizar `dplyr::by_group`
+    
+```{r echo=TRUE, eval=FALSE}
+
+tibble(x = c(NA, Inf, 2, 3, NaN, NA, -Inf, TRUE),
+       y = c(1, 4, 1, 2, 4, 6, 3, 0)) %>% 
+  arrange(desc(x), y)
+```
+
+```{r}
+
+tibble(x = c(NA, Inf, 2, 3, NaN, NA, -Inf, TRUE),
+       y = c(1, 4, 1, 2, 4, 6, 3, 0)) %>% 
+  arrange(desc(x), y)
+```
+
+# `select`
+
+Aplica para columnas: se seleccionan columnas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4), 
+       y     = c(y_0    , y_0    , y_0, y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 1,
+                 y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2,
+                 y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3),
+       group = c(rep(1, 4), rep(2, 4), rep(3, 4), rep(4, 4),
+                 rep(5, 4), rep(6, 4), rep(7, 4), rep(8, 4),
+                 rep(9, 4), rep(10, 4), rep(11, 4), rep(12, 4),
+                 rep(13, 4), rep(14, 4), rep(15, 4), rep(16, 4)) %>% as.character() %>% as_factor()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 2),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#fb9a99", "#e31a1c", "#fdbf6f", "#e31a1c",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#e31a1c",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#e31a1c",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#e31a1c")) +
+  coord_fixed(ratio = 1) + 
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+select(data = <DATOS>, <VARIABLES O EXPRESIONES (SIN COMILLAS)>)
+```
+
+# `select`
+
+- Lenguaje para seleccionar variables
+
+    + Operadores: `:`, `!`, `&`, `|`, `c()`
+    + Algunas funciones auxiliares: `everything()`, `starts_with()`, `ends_with()` 
+    
+- Para más detalles ver `tidyselect`: https://tidyselect.r-lib.org/index.html
+
+```{r echo=TRUE, eval=FALSE}
+
+select(.data = datos::vuelos, 
+       !(starts_with(match = "a") | ends_with(match = "a")))
+```
+
+```{r }
+
+select(.data = datos::vuelos, 
+       !(starts_with(match = "a") | ends_with(match = "a")))
+```
+
+# `mutate`
+
+Aplica para columnas: se crean columnas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6, x_0 + 7,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6, x_0 + 7,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6, x_0 + 7,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6, x_0 + 7), 
+       y     = c(y_0    , y_0    ,     y_0,     y_0,     y_0,     y_0,     y_0,
+                 y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 1,
+                 y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2,
+                 y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3),
+       group = c(rep(1, 4)  , rep(2, 4) , rep(3, 4)  , rep(4, 4)  , rep(5, 4) , rep(6, 4) , rep(7, 4),
+                 rep(8, 4)  , rep(9, 4) , rep(10, 4) , rep(11, 4) , rep(12, 4), rep(13, 4), rep(14, 4),
+                 rep(15, 4) , rep(16, 4), rep(17, 4) , rep(18, 4) , rep(19, 4), rep(20, 4), rep(21, 4),
+                 rep(22, 4) , rep(23, 4), rep(24, 4) , rep(25, 4) , rep(26, 4), rep(27, 4), rep(28, 4)) %>% 
+         as.character() %>% as_factor()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 2),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#fb9a99", "#e31a1c", "#fdbf6f", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00")) +
+  coord_fixed(ratio = 1) + 
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+mutate(data = <DATOS>, <PAR ORDENADO DE NOMBRE Y VALOR>)
+```
+
+# `mutate`
+
+- Por defecto agrega valores al final de la tibble 
+
+    + Si se quiere cambiar este comportamiento consultar las opciones `.before` y `.after`
+
+- Variables creadas con el mismo nombre de variables existentes reemplazan a estas últimas
+
+- Se pueden utilizar variables creadas en la creación de nueva variables
+
+```{r echo=TRUE, eval=FALSE}
+
+mutate(.data = datos::vuelos, 
+       # Convertir distancia de millas a km 
+       distancia    = distancia * 1.609344,
+       # Convertir tiempo de vuelo de minutos a horas
+       tiempo_vuelo = tiempo_vuelo / 60,
+       # Calcular velocidad media con respecto al suelo (km / hora)
+       vel_suelo    = distancia / tiempo_vuelo)[, c("distancia", "tiempo_vuelo", "vel_suelo")]
+```
+
+```{r}
+
+mutate(.data = datos::vuelos, 
+       # Convertir distancia de millas a km 
+       distancia    = distancia * 1.609344,
+       # Convertir tiempo de vuelo de minutos a horas
+       tiempo_vuelo = tiempo_vuelo / 60,
+       # Calcular velocidad media con respecto al suelo (km / hora)
+       vel_suelo    = distancia / tiempo_vuelo)[, c("distancia", "tiempo_vuelo", "vel_suelo")]
+```
+
+# `summarize`
+
+Se crean transformaciones estadísticas a partir de una o más columnas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4), 
+       y     = c(y_0    , y_0    , y_0    , c(NA, NA, NA, NA),
+                 y_0 + 1, y_0 + 1, y_0 + 1, c(NA, NA, NA, NA),
+                 y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 1.5,
+                 y_0 + 3, y_0 + 3, y_0 + 3, c(NA, NA, NA, NA)),
+       group = c(rep(1, 4), rep(2, 4), rep(3, 4), rep(4, 4),
+                 rep(5, 4), rep(6, 4), rep(7, 4), rep(8, 4),
+                 rep(9, 4), rep(10, 4), rep(11, 4), rep(12, 4),
+                 rep(13, 4), rep(14, 4), rep(15, 4), rep(16, 4)) %>% as.character() %>% as_factor()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 2),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#fb9a99", "#e31a1c", "#fdbf6f", NA,
+                               "#fb9a99", "#e31a1c", "#fdbf6f", NA,
+                               "#fb9a99", "#e31a1c", "#fdbf6f", "#e53032",
+                               "#fb9a99", "#e31a1c", "#fdbf6f", NA)) +
+  coord_fixed(ratio = 1) + 
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+summarize(data = <DATOS>, <PAR ORDENADO DE NOMBRE Y FUNCION APLICADA A UNA VARIABLE>)
+```
+
+# `summarize`
+
+```{r echo = TRUE, eval=FALSE}
+
+summarize(.data    = datos::vuelos, 
+          min      = min(atraso_salida, na.rm = TRUE), 
+          max      = max(atraso_salida, na.rm = TRUE),
+          mean     = mean(atraso_salida, na.rm = TRUE),
+          median   = median(atraso_salida, na.rm = TRUE),
+          # Cálculo de la moda como el primer valor 
+          # más frecuente (pueden haber varios),
+          mode     = modeest::mfv1(atraso_salida, na_rm = TRUE),
+          # Cuantiles
+          ## En R existen 9 formas de calcular un cuantil dado que no
+          ## existe un consenso sobre la definción de cuantil 
+          q_25     = quantile(atraso_salida, probs = 0.25, na.rm = TRUE, type = 7),
+          q_75     = quantile(atraso_salida, probs = 0.75, na.rm = TRUE, type = 7),
+          # Estadísticas de dispersión: var, sd, iqr
+          var      = var(atraso_salida, na.rm = TRUE),
+          sd       = sd(atraso_salida, na.rm = TRUE),
+          iqr      = IQR(atraso_salida, na.rm = TRUE, type = 7),
+          n        = n(),
+          # Valores Na y valores no NA
+          na_n     = sum(is.na(atraso_salida)),
+          not_na_n = sum(!is.na(atraso_salida)))
+```
+
+```{r}
+
+summarize(.data    = datos::vuelos, 
+          min      = min(atraso_salida, na.rm = TRUE), 
+          max      = max(atraso_salida, na.rm = TRUE),
+          mean     = mean(atraso_salida, na.rm = TRUE),
+          median   = median(atraso_salida, na.rm = TRUE),
+          # Cálculo de la moda como el primer valor 
+          # más frecuente (pueden haber varios),
+          mode     = modeest::mfv1(atraso_salida, na_rm = TRUE),
+          # Cuantiles
+          ## En R existen 9 formas de calcular un cuantil dado que no
+          ## existe un consenso sobre la definción de cuantil 
+          q_25     = quantile(atraso_salida, probs = 0.25, na.rm = TRUE, type = 7),
+          q_75     = quantile(atraso_salida, probs = 0.75, na.rm = TRUE, type = 7),
+          # Estadísticas de dispersión: var, sd, iqr
+          var      = var(atraso_salida, na.rm = TRUE),
+          sd       = sd(atraso_salida, na.rm = TRUE),
+          iqr      = IQR(atraso_salida, na.rm = TRUE, type = 7),
+          n        = n(),
+          # Valores Na y valores no NA
+          na_n     = sum(is.na(atraso_salida)),
+          not_na_n = sum(!is.na(atraso_salida)))
+```
+
+# `group_by`
+
+Agrupa filas en base a valores de una o más columnas
+
+```{r fig.align='center', fig.height=4, fig.width=12}
+
+tibble(x     = c(x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6,
+                 x_0, x_0 + 1, x_0 + 2, x_0 + 4, x_0 + 5, x_0 + 6), 
+       y     = c(y_0    , y_0    ,     y_0, y_0 - 0.5, y_0 - 0.5, y_0 - 0.5,
+                 y_0 + 1, y_0 + 1, y_0 + 1, y_0 + 0.5, y_0 + 0.5, y_0 + 0.5,
+                 y_0 + 2, y_0 + 2, y_0 + 2, y_0 + 2.5, y_0 + 2.5, y_0 + 2.5,
+                 y_0 + 3, y_0 + 3, y_0 + 3, y_0 + 3.5, y_0 + 3.5, y_0 + 3.5),
+       group = c(rep(1, 4)  , rep(2, 4) , rep(3, 4)  , rep(4, 4)  , rep(5, 4) , rep(6, 4),
+                 rep(8, 4)  , rep(9, 4) , rep(10, 4) , rep(11, 4) , rep(12, 4), rep(13, 4),
+                 rep(15, 4) , rep(16, 4), rep(17, 4) , rep(18, 4) , rep(19, 4), rep(20, 4),
+                 rep(22, 4) , rep(23, 4), rep(24, 4) , rep(25, 4) , rep(26, 4), rep(27, 4)) %>% 
+         as.character() %>% as_factor()) %>%
+  ggplot(aes(x, y)) + 
+  geom_polygon(color = "black", aes(fill = group, group = group),
+               show.legend = FALSE) +
+  geom_segment(data = tibble(x = 3.1, xend = 3.9, y = 2),
+               aes(x = x, xend = xend, y = y, yend = y), 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  scale_fill_manual(values = c("#6a3d9a", "#e31a1c", "#fdbf6f", "#cab2d6", "#e31a1c", "#fdbf6f",
+                               "#cab2d6", "#e31a1c", "#fdbf6f", "#cab2d6", "#e31a1c", "#fdbf6f",
+                               "#cab2d6", "#e31a1c", "#fdbf6f", "#6a3d9a", "#e31a1c", "#fdbf6f",
+                               "#6a3d9a", "#e31a1c", "#fdbf6f", "#6a3d9a", "#e31a1c", "#fdbf6f")) +
+  coord_fixed(ratio = 1) +
+  theme_void()
+```
+
+## Plantilla
+
+```{r echo = TRUE, eval=FALSE}
+
+group_by(data = <DATOS>, <VARIABLES PARA REALIZAR LAS AGRUPACIONES>)
+```
+
+# `group_by`
+
+- Si existen valores `NA` o `NaN` cada uno se agrupa en un conjunto distinto
+- La tibble que se genera señala las variables que se utilizan para agrupar así como el número de grupos que se conforman
+- Si se desea reversar la agrupación utilizar `dplyr::ungroup`
+
+```{r echo = TRUE, eval=FALSE}
+
+group_by(.data = tibble(x = c(NA, 1, 1, NaN, 2, NA, 2, 3, NaN ,3),
+                          y = 1:10), 
+         x)
+```
+
+```{r}
+
+group_by(.data = tibble(x = c(NA, 1, 1, NaN, 2, NA, 2, 3, NaN ,3),
+                          y = 1:10), 
+         x)
+```
+
+# `%>%`
+
+- $f(x = a, y = b)$ es equivalente a:
+
+    + $a \text{ %>% } f(y = b)$
+    + $b \text{ %>% } f(x = a, y = \; .)$
+
+        + En el caso del tidyverse $a \text{ %>% } f(y = b)$ es la equivalencia más utilizada dado que el primer argumento de las funciones corresponde a los datos
+
+- Mejora la lectura del código
+
+    + $f(g(h(s(x = a))), y = b)$
+    
+    + $\begin{matrix}
+        s(a) & \text{ %>% } & \text{Paso 1} \\
+        h()  & \text{ %>% } & \text{Paso 2} \\
+        g()  & \text{ %>% } & \text{Paso 3} \\
+        f(y = b) & \text{}  & \text{Paso 4}
+        \end{matrix}$
+    
+# `%>%`
+        
+## Aplicaciones
+
+```{r echo = TRUE, eval=FALSE}
+
+datos::vuelos %>% 
+  filter(!is.na(atraso_salida)) %>% 
+  group_by(mes) %>% 
+  # Por defecto summarize elimina las agrupaciones
+  summarize(mean = mean(atraso_salida), median = median(atraso_salida), n = n())
+```
+
+```{r}
+
+datos::vuelos %>% 
+  filter(!is.na(atraso_salida)) %>% 
+  group_by(mes) %>% 
+  # Por defecto summarize elimina las agrupaciones
+  summarize(mean = mean(atraso_salida), median = median(atraso_salida), n = n())
+```
+
+# `%>%`
+
+## Aplicaciones
+
+```{r echo=TRUE, eval=FALSE}
+
+tibble(x = c(1, 1, 2, 2, 3, 3, NA, NA),
+       y = c(2, 5, 1, 0, 9, 2,  3, 2)) %>%
+  group_by(x) %>%
+  # .by_group = TRUE: para que no se ignore el agrupamiento
+  arrange(y, .by_group = TRUE)
+```
+
+```{r}
+
+tibble(x = c(1, 1, 2, 2, 3, 3, NA, NA),
+       y = c(2, 5, 1, 0, 9, 2,  3, 2)) %>%
+  group_by(x) %>%
+  # .by_group = TRUE: para que no se ignore el agrupamiento
+  arrange(y, .by_group = TRUE)
+```
+
+# Extensiones utilizando la filosofía del tidyverse
+
+- `naniar`: manejo de valores `NA` (http://naniar.njtierney.com/index.html)
+- `timetk`: manejo de series de tiempo (https://business-science.github.io/timetk/)
+
+## Aplicaciones `naniar`
+
+```{r echo=TRUE, eval=FALSE}
+
+naniar::miss_var_which(data = datos::vuelos)
+naniar::miss_var_table(data = datos::vuelos)
+```
+
+```{r }
+
+naniar::miss_var_which(data = datos::vuelos)
+naniar::miss_var_table(data = datos::vuelos)
+```
+
+# Extensiones utilizando la filosofía del tidyverse
+
+## Aplicaciones `timetk`
+
+```{r echo=TRUE, eval=FALSE}
+
+datos::vuelos %>% 
+  timetk::filter_by_time(.date_var   = fecha_hora, 
+                         .start_date = "2013-06-01",
+                         .end_date   = "2013-12-31") %>% 
+  timetk::summarize_by_time(.date_var = fecha_hora, 
+                    .by       = "month",
+                    min       = min(atraso_salida, na.rm = TRUE),
+                    max       = min(atraso_salida, na.rm = TRUE),
+                    median    = median(atraso_salida, na.rm = TRUE),
+                    mean      = mean(atraso_salida, na.rm = TRUE))
+```
+
+```{r}
+
+datos::vuelos %>% 
+  timetk::filter_by_time(.date_var   = fecha_hora, 
+                         .start_date = "2013-06-01",
+                         .end_date   = "2013-12-31") %>% 
+  timetk::summarize_by_time(.date_var = fecha_hora, 
+                    .by       = "month",
+                    min       = min(atraso_salida, na.rm = TRUE),
+                    max       = min(atraso_salida, na.rm = TRUE),
+                    median    = median(atraso_salida, na.rm = TRUE),
+                    mean      = mean(atraso_salida, na.rm = TRUE))
+```
+
+# Referencias
