@@ -1,4 +1,4 @@
-# R4DS R para Ciencia de Datos Club de Lectura <img src="https://es.r4ds.hadley.nz/hex_r4ds-es.png" alt="r4ds-es-logo" align="right" height=200px />
+# R4DS R para Ciencia de Datos Club de Lectura <img src="https://r4ds-en-espaniol.netlify.app/hex_r4ds-es.png" alt="r4ds-es-logo" align="right" height=200px />
 
 Un grupo de lectura semanal siguiendo los capítulos de [R para Ciencia de Datos de Garrett Grolemund y Hadley Wickham](https://es.r4ds.hadley.nz/)
 
@@ -28,6 +28,7 @@ Este repositorio tiene 3 directorios principales:
 
 <details>
   <summary> Reuniones futuras </summary>
+  
 - 2020-02-02 - Capítulo 8 - Flujo de trabajo: proyectos
 - 2020-02-09 - Capítulo 9 - Introducción
 - 2020-02-09 - Capítulo 10 - Tibbles
