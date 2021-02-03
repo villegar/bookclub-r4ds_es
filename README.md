@@ -18,20 +18,15 @@ Este repositorio tiene 3 directorios principales:
 
 ### Horario de Reuniones
 
-*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 3pm C(D)T* / 9pm GMT
+*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2020-01-12 - Capítulo 4 - Flujo de trabajo: conocimientos básicos - Laura Pereyra
-- 2020-01-12 - Capítulo 5 - Transformación de datos (5.1 - 5.4) - Laura Pereyra
-- 2020-01-19 - Capítulo 5 - Transformación de datos (5.5 - 5.7)
-- 2020-01-19 - Capítulo 6 - Flujo de trabajo: Scripts
-- 2020-01-26 - Capítulo 7 - Análisis exploratorio de datos (EDA)
+- 2020-02-09 - Capítulo 8 - Flujo de trabajo: proyectos - Luis Francisco Gómez López
+- 2020-02-09 - Capítulo 9 - Introducción - Luis Francisco Gómez López
+- 2020-02-09 - Capítulo 10 - Tibbles - Luis Francisco Gómez López
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2020-02-02 - Capítulo 8 - Flujo de trabajo: proyectos
-- 2020-02-09 - Capítulo 9 - Introducción
-- 2020-02-09 - Capítulo 10 - Tibbles
 - 2020-02-16 - Capítulo 11 - Importación de datos
 - 2020-02-23 - Capítulo 12 - Datos ordenados
 
@@ -42,10 +37,29 @@ Este repositorio tiene 3 directorios principales:
 
 Capítulos 1-2 Introducción 
 
-- Cohorte 1: Laura Pereyra ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana01/Cohorte1/) | [Video](https://youtu.be/q2IquNe1mnw))
+- Cohorte 1: Laura Pereyra ([Diapositivas](#) | [Video](https://youtu.be/q2IquNe1mnw))
 
-Capítulo 3  Visualización de datos
+Capítulo 3 Visualización de datos
 
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03.html) | Videos: [Parte 1](https://youtu.be/sYJlzqdEswM) | PARTE 2)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03.html) | Videos: [Parte 1](https://youtu.be/sYJlzqdEswM) | [Parte 2](https://youtu.be/pQVkVaWrklA))
   
   Ejercicios y soluciones: [Parte 1](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03-ejercicios/Capitulo03-ejercicios.html) | [Parte 2](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana02-03/Cohorte1/Capitulo03-ejercicios/Capitulo03-ejercicios-parte2.html)
+
+Capítulo 4 Flujo de trabajo: conocimientos básicos
+
+- Cohorte 1: Laura Pereyra ([Diapositivas](#) | [Video](https://youtu.be/CMqlPZsNiqo))
+  
+Capítulo 5 Transformación de datos
+
+- Cohorte 1: 
+  - 5.1 - 5.2 Laura Pereyra ([Diapositivas](#) | [Video](https://youtu.be/CMqlPZsNiqo?t=540))
+  - 5.3 - 5.7 Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana05/Cohorte1/005_transformacion_datos.html) | [Video](https://youtu.be/N4V2NL-TTg8))
+  
+Capítulo 6 Flujo de trabajo: Scripts
+
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte1/Capitulo06.html) | [Video](https://youtu.be/f1ZGqZvt0ws))
+
+Capítulo 7 Análisis exploratorio de datos (EDA)
+
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte1/Capitulo07.html) | Videos: [Parte 1](https://youtu.be/f1ZGqZvt0ws?t=770) | PARTE 2)
+  
