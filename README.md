@@ -20,20 +20,23 @@ Este repositorio tiene 3 directorios principales:
 
 *Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2020-02-09 - Capítulo 8 - Flujo de trabajo: proyectos - Luis Francisco Gómez López
-- 2020-02-09 - Capítulo 9 - Introducción - Luis Francisco Gómez López
-- 2020-02-09 - Capítulo 10 - Tibbles - Luis Francisco Gómez López
+- 2021-02-16 - Capítulo 11 - Importación de datos - Roberto Villegas-Diaz
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2020-02-16 - Capítulo 11 - Importación de datos
-- 2020-02-23 - Capítulo 12 - Datos ordenados
+- 2021-02-23 - Capítulo 12 - Datos ordenados
+- 2021-03-02 - Capítulo 13 - Datos relacionales
+- 2021-03-09 - Capítulo 14 - Cadenas de caracteres
+- 2021-03-16 - Capítulo 15 - Factores
+- 2021-03-23 - Capítulo 16 - Fechas y horas
 
 </details>
 <hr>
 
 ### Presentaciones y Grabaciones
+
+##### Explorar
 
 Capítulos 1-2 Introducción 
 
@@ -57,9 +60,22 @@ Capítulo 5 Transformación de datos
   
 Capítulo 6 Flujo de trabajo: Scripts
 
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte1/Capitulo06.html) | [Video](https://youtu.be/f1ZGqZvt0ws))
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte01/Capitulo06.html) | [Video](https://youtu.be/f1ZGqZvt0ws))
 
 Capítulo 7 Análisis exploratorio de datos (EDA)
 
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte1/Capitulo07.html) | Videos: [Parte 1](https://youtu.be/f1ZGqZvt0ws?t=770) | PARTE 2)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte01/Capitulo07.html) | Videos: [Parte 1](https://youtu.be/f1ZGqZvt0ws?t=770) | PARTE 2)
   
+Capítulo 8 - Flujo de trabajo: proyectos
+
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/008_flujo_trabajo.html) | VIDEO)
+
+##### Manejar o domar datos
+Capítulo 9 - Introducción
+
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/009_transformar_datos.html) | VIDEO)
+
+Capítulo 10 - Tibbles
+
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/010_tibbles.html) | VIDEO)
+
