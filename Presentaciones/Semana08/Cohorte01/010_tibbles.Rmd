@@ -1,0 +1,116 @@
+---
+title: |
+  | R para Ciencia de Datos 
+  | Club de Lectura r4ds
+  | Cap 10 
+date: 2020-02-06 21:00:57 GMT -05:00
+output: slidy_presentation
+bibliography: R_for_data_science.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      fig.align  = 'center', 
+                      fig.height = 4, 
+                      fig.width  = 12)
+```
+
+```{r message = FALSE}
+
+library(tidyverse)
+library(datos)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+```
+
+# Tibbles
+
+En [@grolemund_r_2019, Cap 10] aprenderás a:
+
+- Crear tibbles
+- Las diferencias entre tibbles y dataframes
+- Interactuar con código antiguo si no funcionan las tibbles
+
+## Recursos adicionales
+
+- https://tibble.tidyverse.org/
+
+# Creación de tibbles
+
+- `as_tibble()`: convierte un objeto, como una data frame o una matriz, en una tibble 
+
+```{r echo=TRUE}
+
+class(iris)
+class(iris %>% as_tibble())
+```
+
+- `tibble`: para construir una tibble
+
+```{r echo=TRUE}
+
+tibble(x = seq.Date(from = ymd("2020-01-01"), to = ymd("2020-01-05"), by = "day"),
+       y = 1:5)
+```
+
+# Creación de tibbles
+
+- `tibble` vs data frame
+
+    + No cambia el tipo de los inputs
+    + No cambia el nombre de las variables
+    + No asigna nombres a las filas
+    + Solo muestran las primeras 10 filas y solo aquellas columnas que entran en el ancho de la pantalla
+    + Nunca funcionan con coincidencias parciales cuando se utiliza `$` para extraer variables
+    
+```{r echo=TRUE}
+
+data_frame <- data.frame(fecha   = seq.Date(from = ymd("2020-01-01"), to = ymd("2020-01-05"), by = "day"),
+                         valores = 1:5)
+
+tbl <- tibble(fecha   = seq.Date(from = ymd("2020-01-01"), to = ymd("2020-01-05"), by = "day"),
+                         valores = 1:5)
+
+data_frame$fe
+tbl$fe
+```
+
+# Creación de tibbles
+
+- Con las tibbles podemos utilizar nombres __no sintácticos__ con ``
+
+```{r echo=TRUE}
+
+tibble(`Fecha de inicio` = seq.Date(from = ymd("2020-01-01"), to = ymd("2020-01-05"), by = "day"),
+       `Valores recolectados` = 1:5) %>% 
+  knitr::kable() %>% 
+  kableExtra::kable_classic(full_width = FALSE)
+```
+
+```{r echo=TRUE}
+
+data.frame(`Fecha de inicio`   = seq.Date(from = ymd("2020-01-01"), to = ymd("2020-01-05"), by = "day"),
+           `Valores recolectados` = 1:5) %>% 
+  knitr::kable() %>% 
+  kableExtra::kable_classic(full_width = FALSE)
+```
+
+# Creación de tibbles
+
+- Otra forma de crear tibbles es con `tribble`
+
+```{r echo=TRUE}
+
+tribble(
+  ~fecha,            ~valores,
+  ymd("2020-01-01"), 1,
+  ymd("2020-01-02"), 2,
+  ymd("2020-01-03"), 3,
+  ymd("2020-01-04"), 4,
+  ymd("2020-01-05"), 5
+)
+```
+
+# Referencias
