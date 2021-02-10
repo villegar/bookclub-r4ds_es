@@ -1,0 +1,52 @@
+---
+title: |
+  | R para Ciencia de Datos 
+  | Club de Lectura r4ds
+  | Cap 9 
+date: 2020-02-01 18:44:30 GMT -05:00
+output: slidy_presentation
+bibliography: R_for_data_science.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      fig.align  = 'center', 
+                      fig.height = 4, 
+                      fig.width  = 12)
+```
+
+```{r message = FALSE}
+
+library(tidyverse)
+library(datos)
+library(knitr)
+```
+
+# Manejar datos
+
+En [@grolemund_r_2019, Cap 9] aprenderás a manipular datos. Es decir:
+
++ Importarlos
++ Ordenarlos
++ Transformarlos
+
+```{r out.width="90%"}
+
+include_graphics(path = "https://r4ds-en-espaniol.netlify.app/diagrams_w_text_as_path/es/data-science-wrangle.svg")
+```
+
+# Manejar datos
+
+- Para manejar los datos se introducirá el objeto denominado tibble
+- También conocerás cómo traer los datos al disco
+- Finalmente entederás el concepto de datos ordenados
+
+También para manipular datos necesitaras conocer acerca de:
+
+- Datos relacionales
+- Cadenas de caracteres 
+- Factores
+- Fechas
+
+# Referencias

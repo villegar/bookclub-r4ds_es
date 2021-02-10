@@ -1,0 +1,83 @@
+---
+title: |
+  | R para Ciencia de Datos 
+  | Club de Lectura r4ds
+  | Cap 8 
+date: 2020-02-01 15:50:03 GMT -05:00
+output: slidy_presentation
+bibliography: R_for_data_science.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      fig.align  = 'center', 
+                      fig.height = 4, 
+                      fig.width  = 12)
+```
+
+```{r message = FALSE}
+
+library(tidyverse)
+library(datos)
+library(knitr)
+library(cowplot)
+```
+
+# Flujo de trabajo: proyectos
+
+En [@grolemund_r_2019, Cap 8] aprenderás sobre:
+
++ Rutas
++ Directorios
++ Proyectos
+
+# Configuracion de Rstudio IDE
+
+```{r out.width="50%"}
+
+include_graphics(path = "https://r4ds-en-espaniol.netlify.app/screenshots/rstudio-workspace.png")
+```
+
+__Observacion__: Utilizar `Ctrl + Shift + F10` para reiniciar la sesión
+
+# Directorio
+
+- `getwd` sirve para obtener el directorio de trabajo
+- `setwd` sirve para fijar el directorio de trabajo
+
+## Rutas y directorios
+
+- Existen dos estilos
+
+    + Mac y Linux
+    + Microsoft
+    
+- Existen 3 diferencias principales
+
+    + Para separar los componentes de la ruta Mac y Linux utilizan `/` y Microsoft utiliza `\`
+    + En Mac y Linux las rutas absolutas empiezan con `/` y en Microsoft empiezan con el nombre de la letra del disco, usualmente es `C:`
+    
+    + En Linux y Mac el directorio personal es `~` mientras que en Microsoft no existe esa noción
+    
+# Proyectos en Rstudio IDE
+
+```{r out.width="90%"}
+
+
+p1 <- ggdraw() +
+  draw_image(image = "https://r4ds-en-espaniol.netlify.app/screenshots/rstudio-project-1.png")
+
+p2 <- ggdraw() +
+  draw_image(image = "https://r4ds-en-espaniol.netlify.app/screenshots/rstudio-project-2.png")
+
+p3 <- ggdraw() +
+  draw_image(image = "https://r4ds-en-espaniol.netlify.app/screenshots/rstudio-project-3.png")
+
+plot_grid(p1, p2, p3, ncol = 3)
+```
+
+__Observación__: con los proyectos podemos fijar el directorio de trabajo
+
+# Referencias
+
