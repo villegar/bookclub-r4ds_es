@@ -1,0 +1,212 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 11: Importación de datos"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2021-02-16
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+## Contenidos
+
+* 11.1 Introducción
+
+* 11.2 Comenzando
+
+* 11.3 Segmentar un vector
+
+* 11.4 Segmentar un archivo
+
+* 11.5 Escribir a un archivo
+
+* 11.6 Otros tipos de datos
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r}
+if (!require(tidyverse))
+  install.packages("tidyverse")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## 11.1 Introducción
+
+.center[
+![:escala 85%](https://github.com/allisonhorst/stats-illustrations/raw/master/rstats-artwork/data_cowboy.png)
+]
+
+.footnote[Fuente: Allison Horst  https://github.com/allisonhorst/stats-illustrations]
+
+---
+
+## 11.2 Comenzando
+
+##### Archivos planos a `data.frame`s:
+
+- `readr::read_csv()` (`,`), `readr::read_csv2` (`;`), `readr::read_tsv()` y `readr::read_delim()`.
+
+- `readr::read_fwf()`: archivos de ancho fijo. `readr::fwf_widths()` y `readr::fwf_positions()`.
+
+- `readr::read_log()`: archivos de registro estilo Apache.
+
+---
+
+## 11.2 Comenzando (2)
+
+```{r}
+alturas <- read_csv("datos/alturas.csv")
+```
+
+---
+
+## 11.2 Comenzando (3)
+
+```{r}
+read_csv("a,b,c
+         1,2,3
+         4,5,6")
+```
+
+---
+
+## 11.2 Comenzando (4)
+
+##### Algunas opciones útiles:
+
+Ignorar filas
+
+```{r}
+read_csv("La primera línea de metadata 
+         La segunda línea de metadata
+         x,y,z
+         1,2,3", skip = 2)
+```
+
+--
+
+Ignorar comentarios
+
+```{r}
+read_csv("# Un comentario que quiero ignorar
+         x,y,z
+         1,2,3", comment = "#")
+```
+
+---
+
+## 11.2 Comenzando (5)
+
+Datos sin nombres de columna
+```{r}
+read_csv("1,2,3
+         4,5,6", col_names = FALSE)
+```
+
+--
+
+Alternativamente,
+
+```{r}
+read_csv("1,2,3
+         4,5,6", col_names = c("x", "y", "z"))
+```
+
+
+---
+
+## 11.2 Comenzando (6)
+
+Cambiar `NA`s
+```{r}
+read_csv("a,b,c
+         1,2,.", na = ".")
+```
+
+---
+
+## 11.2 Comenzando (7)
+
+> ¿Y por qué no usar las funciones base de R? Como `read.csv()`
+
+--
+
+- Rendimiento: las funciones en `readr` son hasta 10 veces más rápidas.
+
+  > Y para set de datos muy grandes, `data.table` es una mejor opción.
+
+- Producen tibbles y con ello todos los beneficios discutidos en el capítulo 10.
+
+- Reproducibilidad: funciones de base R pueden compartarse distinto de acuerdo al sistema operativo.
+
+---
+
+### 11.2.2 Ejercicios
+
+1. ¿Qué función utilizarías para leer un archivo donde los campos están separados con “|”?
+
+2. Además de `file`, `skip` y `comment`, ¿qué otros argumentos tienen en común `read_csv()` y `read_tsv()`?
+
+3. ¿Cuáles son los argumentos más importantes de `read_fwf()`?
+
+4. Algunas veces las cadenas de caracteres en un archivo csv contienen comas. Para evitar que causen problemas, deben estar rodeadas por comillas, como `"` o `'`. Por convención, `read_csv()` asume que el caracter de separación será `"`.¿Qué argumentos debes especificar para leer el siguiente texto en un data frame?
+  ```{r, eval = FALSE}
+  "x,y\n1,'a,b'"
+  ```
+
+5. Identifica qué está mal en cada una de los siguientes archivos csv en línea (_inline_). ¿Qué pasa cuando corres el código?
+  ```{r, eval = FALSE}
+  read_csv("a,b\n1,2,3\n4,5,6")
+  read_csv("a,b,c\n1,2\n1,2,3,4")
+  read_csv("a,b\n\"1")
+  read_csv("a,b\n1,2\na,b")
+  read_csv("a;b\n1;3")
+  ```
+
+<!-- .pull-left[ -->
+
+<!-- ] -->
+
+<!-- .pull-right[ -->
+<!-- ] -->
+
+---
+
+## 11.3 Segmentar un vector
+
+
+---
+
+## 11.4 Segmentar un archivo
+
+
+---
+
+## 11.5 Escribir a un archivo
+
+
+---
+
+## 11.6 Otros tipos de datos
