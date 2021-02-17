@@ -2,7 +2,7 @@
 title: "R para Ciencia de Datos"
 subtitle: "Capítulo 11: Importación de datos"
 author: "Roberto Villegas-Diaz (GH: villegar)"
-date: 2021-02-16
+date: 2021-02-16 y 2021-02-23
 output:
   xaringan::moon_reader:
     nature:
@@ -232,7 +232,7 @@ Segmentadores más importantes:
 
 1. `parse_logical()` y `parse_integer()`: valores lógicos y enteros.
   
-2. `parse_double()` (estricto) y `parse_numer()` (flexible)
+2. `parse_double()` (estricto) y `parse_number()` (flexible)
 
 3. `parse_character()`: characteres
   > Cuidado con characteres especiales, como acentos. <br>
@@ -256,7 +256,7 @@ Segmentadores más importantes:
 
 2. Characteres especiales: `£10`, `10%`
 
-3. Agrupación para mejor legibidad: `1,000,000,000` vs `1000000000`
+3. Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
 
 
 ---
@@ -290,7 +290,7 @@ parse_number("El tiquete tiene un precio de $123.45")
 
 ## 11.3 Segmentar un vector (8)
 ### Números (4)
-> Agrupación para mejor legibidad: `1,000,000,000` vs `1000000000`
+> Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
 
 ```{r}
 # Utilizado en los Estados Unidos de América
@@ -544,6 +544,11 @@ d5 <- "12/30/14" # Diciembre 30, 2014
 t1 <- "1705"
 t2 <- "11:15:10.12 PM"
 ```
+
+---
+
+class: center, inverse, middle
+background-image: url("https://i.ytimg.com/vi/WEX70PdrBdU/maxresdefault.jpg")
 
 ---
 
