@@ -1,0 +1,216 @@
+---
+title: "Capítulo 11: Importación de datos"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## 11.2.2
+
+1. ¿Qué función utilizarías para leer un archivo donde los campos están separados con “|”?
+
+```{r 11-2-2-1, exercise=TRUE}
+read_delim(archivo, delim = "|")
+```
+
+2. Además de `file`, `skip` y `comment`, ¿qué otros argumentos tienen en común `read_csv()` y `read_tsv()`?
+
+```{r 11-2-2-2, exercise=TRUE}
+?read_csv
+?read_tsv
+```
+
+La página de documentación es la misma, otros argumentos compartidos por ambas funciones son:
+
+- `col_names`: especificar el nombre de las columnas
+
+- `col_types`: especificar el tipo de las columnas
+
+- `locale`: especificar la codificación del archivo
+
+- `na`: especificar que valores deben ser interpretados como faltantes (`NA`)
+
+- `quoted_na`: valor boleano para indicar si valores faltantes entre comillas, deberían ser considerados como faltantes (`NA`)
+
+- `trim_ws`: valor boleano para indicar si espacios en blanco en los extremos deberían ser removidos
+
+- `n_max`: número máximo de filas a leer
+
+- `guess_max`: número máximo de filas a usar para adivinar el tipo de columnas
+
+- `progress`: valor boleano para indicar si una barra de progreso debería ser mostrada
+
+
+3. ¿Cuáles son los argumentos más importantes de `read_fwf()`?
+
+Esta función lee archivos de "ancho fijo"
+
+```{r 11-2-2-3, exercise=TRUE}
+?read_fwf
+```
+
+`col_positions` que se usa par a indicar la posición de cada columna.
+
+4. Algunas veces las cadenas de caracteres en un archivo csv contienen comas. Para evitar que causen problemas, deben estar rodeadas por comillas, como `"` o `'`. Por convención, `read_csv()` asume que el caracter de separación será `"`.¿Qué argumentos debes especificar para leer el siguiente texto en un data frame?
+  ```{r, eval = FALSE, echo = TRUE}
+  "x,y\n1,'a,b'"
+  ```
+  
+  
+```{r 11-2-2-4, exercise=TRUE}
+x <- "x,y\n1,'a,b'"
+read_csv(x, quote = "'")
+```
+
+
+5. Identifica qué está mal en cada una de los siguientes archivos csv en línea (_inline_). ¿Qué pasa cuando corres el código?
+
+  ```{r, eval = FALSE, echo = TRUE}
+  read_csv("a,b\n1,2,3\n4,5,6")
+  read_csv("a,b,c\n1,2\n1,2,3,4")
+  read_csv("a,b\n\"1")
+  read_csv("a,b\n1,2\na,b")
+  read_csv("a;b\n1;3")
+  ```
+  
+Solo los nombres de dos columnas (`a, b`) son especificados y los datos tienen tres, es por ello que la tercer columna es removida.
+```{r 11-2-2-5-1, exercise=TRUE}
+read_csv("a,b\n1,2,3\n4,5,6")
+# Alternativa
+read_csv("a,b,c\n1,2,3\n4,5,6")
+```  
+
+El número de columnas en los nombres y las filas no son compatibles: tres, dos y cuatro.
+```{r 11-2-2-5-2, exercise=TRUE}
+read_csv("a,b,c\n1,2\n1,2,3,4")
+# Alternativa
+read_csv("a,b,c,d\n1,2\n1,2,3,4")
+```
+
+El número de columnas en los nombres y las filas no son compatibles: dos y uno
+```{r 11-2-2-5-3, exercise=TRUE}
+read_csv("a,b\n\"1")
+```
+
+Las columnas son convertidas en characteres debido a la segunda columna
+```{r 11-2-2-5-4, exercise=TRUE}
+read_csv("a,b\n1,2\na,b")
+```
+
+Los valores en este "archivo" están separados por `;` y no `,`, para procesar el archivo correctamente, la función `read_csv2` debería ser usada
+```{r 11-2-2-5-5, exercise=TRUE}
+read_csv("a;b\n1;3")
+# Alternativa
+read_csv2("a;b\n1;3")
+```
+
+## 11.3.5
+
+1. ¿Cuáles son los argumentos más importantes para `locale()`?
+
+```{r 11-3-5-1, exercise=TRUE}
+?readr::locale
+```
+
+- `date_names`, `date_format`, y `time_format`: formatos para fechas y horas
+
+- `tz`: huso horario
+
+- `decimal_mark` y `grouping_mark`
+
+- `encoding`
+
+2. ¿Qué pasa si intentas establecer `decimal_mark` y `grouping_mark` como el mismo caracter? ¿Qué pasa con el valor por defecto de `grouping_mark` cuando estableces `decimal_mark` como `,`? ¿Qué pasa con el valor por defecto de `decimal_mark` cuando estableces `grouping_mark` como `.`?
+
+```{r 11-3-5-2, exercise=TRUE, error = TRUE}
+locale(decimal_mark = ".", grouping_mark = ".")
+locale(decimal_mark = ",")
+locale(grouping_mark = ".")
+```
+
+3. No discutimos las opciones de `date_format` y `time_format` para `locale()`. ¿Qué hacen? Construye un ejemplo que muestre cuándo podrían ser útiles.
+
+Estas proveen los formatos por defecto para fecha y tiempo.
+
+```{r 11-3-5-3, exercise=TRUE}
+parse_date("1 janvier 2015", "%d %B %Y", locale = locale("fr"))
+```
+
+Podemos usar estas opciones para segmentar fechas  y horas que no siguen un estándar"
+
+```{r 11-3-5-3-2, exercise=TRUE}
+mi_locale <- locale(date_format = "Hoy es el %d de %M del %Y",
+                    time_format = "Son las %H y %M")
+fechas <- c("Hoy es el 16 de 02 del 2021", "Hoy es el 31 de 12 del 2020")
+parse_date(fechas)
+parse_date(fechas, locale = mi_locale)
+
+tiempos <- c("Son las 22 y 05", "Son las 07 y 30")
+parse_time(tiempos)
+parse_time(tiempos, locale = mi_locale)
+```
+
+4. Si vives fuera de EEUU, crea un nuevo objeto locale que contenga las opciones para los tipos de archivo que lees más comúnmente.
+
+
+```{r 11-3-5-4, exercise=TRUE}
+cr_locale <- locale(date_format = "%d/%m/%Y") # Costa Rica
+parse_date("03/04/2020")
+parse_date("03/04/2020", locale = cr_locale)
+```
+
+5. ¿Cuál es la diferencia entre `read_csv()` y `read_csv2()`?
+
+```{r 11-3-5-5, exercise=TRUE}
+?read_csv
+?read_csv2
+```
+
+`read_csv2` usa `;` como separador.
+
+6. ¿Cuáles son las codificaciones más comunes empleadas en Europa? ¿Cuáles son las codificaciones más comunes utilizadas en Asia? ¿Y en América Latina? Googlea un poco para descubrirlo.
+
+```{r 11-3-5-6, exercise=TRUE}
+
+```
+
+Debido a la gran diversidad de idiomas en Europa, hay un gran número de codificaciones usadas. Entre estos están:
+
+- ISO-8859-1
+- ISO-8859-2
+- Griego: ISO-8859-7
+- Hebreo: ISO-8859-8
+- Turco: ISO-8859-9
+
+
+7. Genera el formato correcto de texto para segmentar cada una de las siguientes fechas y horas:
+
+```{r, echo = TRUE}
+d1 <- "Enero 1, 2010"
+d2 <- "2015-Ene.-07"
+d3 <- "06-Jun.-2017"
+d4 <- c("Agosto 19 (2015)", "Julio 1 (2015)")
+d5 <- "12/30/14" # Diciembre 30, 2014
+t1 <- "1705"
+t2 <- "11:15:10.12 PM"
+```
+
+De acuerdo a la ICU ([International Components for Unicode](http://site.icu-project.org)), las abreviaciones de meses deben terminar con un punto, en lugar de `"Ene"` para el mes de Enero, deberíamos usar `"Ene."`. Para más detalles sobre locales: https://www.localeplanet.com/icu/es-419/index.html
+
+```{r 11-3-5-7, exercise=TRUE}
+parse_date(d1, "%B %d, %Y", locale = locale("es"))
+parse_date(d2, "%Y-%b-%d", locale = locale("es"))
+parse_date(d3, "%d-%b-%Y", locale = locale("es"))
+parse_date(d4, "%B %d (%Y)", locale = locale("es"))
+parse_date(d5, "%m/%d/%y")
+parse_time(t1, "%H%M")
+parse_time(t2, "%H:%M:%OS %p")
+```
+
+
