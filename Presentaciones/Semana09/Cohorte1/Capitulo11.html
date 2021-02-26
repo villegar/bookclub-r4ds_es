@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R para Ciencia de Datos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Roberto Villegas-Diaz (GH: villegar)" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R para Ciencia de Datos
+## Capítulo 11: Importación de datos
+### Roberto Villegas-Diaz (GH: villegar)
+### 2021-02-16 y 2021-02-23
+
+---
+
+
+
+
+## Contenidos
+
+* 11.1 Introducción
+
+* 11.2 Comenzando
+
+* 11.3 Segmentar un vector
+
+* 11.4 Segmentar un archivo
+
+* 11.5 Escribir a un archivo
+
+* 11.6 Otros tipos de datos
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+
+```r
+if (!require(tidyverse))
+  install.packages("tidyverse")
+```
+
+```
+## Loading required package: tidyverse
+```
+
+```
+## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+```
+
+```
+## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
+## ✓ tibble  3.0.6     ✓ dplyr   1.0.4
+## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
+## ✓ readr   1.4.0     ✓ forcats 0.5.0
+```
+
+```
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+```
+
+```r
+if (!require(datos))
+  install.packages("datos")
+```
+
+```
+## Loading required package: datos
+```
+
+---
+
+## 11.1 Introducción
+
+.center[
+![:escala 85%](https://github.com/allisonhorst/stats-illustrations/raw/master/rstats-artwork/data_cowboy.png)
+]
+
+.footnote[Fuente: Allison Horst  https://github.com/allisonhorst/stats-illustrations]
+
+---
+
+## 11.2 Comenzando
+
+##### Archivos planos a `data.frame`s:
+
+- `readr::read_csv()` (`,`), `readr::read_csv2` (`;`), `readr::read_tsv()` y `readr::read_delim()`.
+
+- `readr::read_fwf()`: archivos de ancho fijo. `readr::fwf_widths()` y `readr::fwf_positions()`.
+
+- `readr::read_log()`: archivos de registro estilo Apache.
+
+---
+
+## 11.2 Comenzando (2)
+
+
+```r
+alturas &lt;- read_csv("datos/alturas.csv")
+```
+
+```
+## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   earn = col_double(),
+##   height = col_double(),
+##   sex = col_character(),
+##   ed = col_double(),
+##   age = col_double(),
+##   race = col_character()
+## )
+```
+
+---
+
+## 11.2 Comenzando (3)
+
+
+```r
+read_csv("a,b,c
+         1,2,3
+         4,5,6")
+```
+
+```
+## # A tibble: 2 x 3
+##       a     b     c
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     1     2     3
+## 2     4     5     6
+```
+
+---
+
+## 11.2 Comenzando (4)
+
+##### Algunas opciones útiles:
+
+Ignorar filas
+
+
+```r
+read_csv("La primera línea de metadata 
+         La segunda línea de metadata
+         x,y,z
+         1,2,3", skip = 2)
+```
+
+```
+## # A tibble: 1 x 3
+##       x     y     z
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     1     2     3
+```
+
+--
+
+Ignorar comentarios
+
+
+```r
+read_csv("# Un comentario que quiero ignorar
+         x,y,z
+         1,2,3", comment = "#")
+```
+
+```
+## # A tibble: 1 x 3
+##       x     y     z
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     1     2     3
+```
+
+---
+
+## 11.2 Comenzando (5)
+
+Datos sin nombres de columna
+
+```r
+read_csv("1,2,3
+         4,5,6", col_names = FALSE)
+```
+
+```
+## # A tibble: 2 x 3
+##      X1    X2    X3
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     1     2     3
+## 2     4     5     6
+```
+
+--
+
+Alternativamente,
+
+
+```r
+read_csv("1,2,3
+         4,5,6", col_names = c("x", "y", "z"))
+```
+
+```
+## # A tibble: 2 x 3
+##       x     y     z
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     1     2     3
+## 2     4     5     6
+```
+
+
+---
+
+## 11.2 Comenzando (6)
+
+Elegir qué valores son interpretados como faltantes (`NA`s)
+
+```r
+read_csv("a,b,c
+         1,2,.", na = ".")
+```
+
+```
+## # A tibble: 1 x 3
+##       a     b c    
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;lgl&gt;
+## 1     1     2 NA
+```
+
+---
+
+## 11.2 Comenzando (7)
+
+&gt; ¿Y por qué no usar las funciones base de R? Como `read.csv()`
+
+--
+
+- Rendimiento: las funciones en `readr` son hasta 10 veces más rápidas.
+
+  &gt; Y para set de datos muy grandes, `data.table` es una mejor opción.
+
+- Producen tibbles y con ello todos los beneficios discutidos en el capítulo 10.
+
+- Reproducibilidad: funciones de base R pueden compartarse distinto de acuerdo al sistema operativo.
+
+---
+
+### 11.2.2 Ejercicios
+
+1. ¿Qué función utilizarías para leer un archivo donde los campos están separados con “|”?
+
+2. Además de `file`, `skip` y `comment`, ¿qué otros argumentos tienen en común `read_csv()` y `read_tsv()`?
+
+3. ¿Cuáles son los argumentos más importantes de `read_fwf()`?
+
+4. Algunas veces las cadenas de caracteres en un archivo csv contienen comas. Para evitar que causen problemas, deben estar rodeadas por comillas, como `"` o `'`. Por convención, `read_csv()` asume que el caracter de separación será `"`.¿Qué argumentos debes especificar para leer el siguiente texto en un data frame?
+  
+  ```r
+  "x,y\n1,'a,b'"
+  ```
+
+5. Identifica qué está mal en cada una de los siguientes archivos csv en línea (_inline_). ¿Qué pasa cuando corres el código?
+  
+  ```r
+  read_csv("a,b\n1,2,3\n4,5,6")
+  read_csv("a,b,c\n1,2\n1,2,3,4")
+  read_csv("a,b\n\"1")
+  read_csv("a,b\n1,2\na,b")
+  read_csv("a;b\n1;3")
+  ```
+
+---
+
+## 11.3 Segmentar un vector
+
+&gt; ¿Cómo son los tipos de columna reconocidos?
+
+--
+
+`readr::parse_*`: convierten vectores de caracteres y los convierten al tipo apropiado.
+
+--
+
+
+```r
+str(parse_logical(c("TRUE", "FALSE", "NA")))
+```
+
+```
+##  logi [1:3] TRUE FALSE NA
+```
+
+```r
+str(parse_integer(c("1", "2", "3")))
+```
+
+```
+##  int [1:3] 1 2 3
+```
+
+```r
+str(parse_date(c("2010-01-01", "1979-10-14")))
+```
+
+```
+##  Date[1:2], format: "2010-01-01" "1979-10-14"
+```
+
+---
+
+## 11.3 Segmentar un vector (2)
+
+Si la segmentación falla:
+
+
+```r
+x &lt;- parse_integer(c("123", "345", "abc", "123.45"))
+```
+
+```
+## Warning: 2 parsing failures.
+## row col               expected actual
+##   3  -- an integer             abc   
+##   4  -- no trailing characters 123.45
+```
+
+```r
+x
+```
+
+```
+## [1] 123 345  NA  NA
+## attr(,"problems")
+## # A tibble: 2 x 4
+##     row   col expected               actual
+##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;                  &lt;chr&gt; 
+## 1     3    NA an integer             abc   
+## 2     4    NA no trailing characters 123.45
+```
+
+---
+
+## 11.3 Segmentar un vector (3)
+
+Si hay muchas fallas de segmentación:
+
+
+```r
+readr::problems(x)
+```
+
+```
+## # A tibble: 2 x 4
+##     row   col expected               actual
+##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;                  &lt;chr&gt; 
+## 1     3    NA an integer             abc   
+## 2     4    NA no trailing characters 123.45
+```
+
+---
+
+## 11.3 Segmentar un vector (4)
+
+Segmentadores más importantes:
+
+1. `parse_logical()` y `parse_integer()`: valores lógicos y enteros.
+  
+2. `parse_double()` (estricto) y `parse_number()` (flexible)
+
+3. `parse_character()`: characteres
+  &gt; Cuidado con characteres especiales, como acentos. &lt;br&gt;
+  &gt; La opción `enconding` será muy útil.
+
+4. `parse_factor()`: factores
+
+5. `parse_datetime()`, `parse_date()` y `parse_time()`: fechas y horas.
+
+---
+
+## 11.3 Segmentar un vector (5)
+
+### Números
+
+&gt; ¿Qué puede salir mal?
+
+--
+
+1. Formato para separar decimales, `,` versus `.`
+
+2. Characteres especiales: `£10`, `10%`
+
+3. Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
+
+
+---
+
+## 11.3 Segmentar un vector (6)
+### Números (2)
+
+&gt; Formato para separar decimales, `,` versus `.`
+
+
+```r
+parse_double("1.23")
+```
+
+```
+## [1] 1.23
+```
+
+```r
+parse_double("1,23", locale = locale(decimal_mark = ","))
+```
+
+```
+## [1] 1.23
+```
+
+
+---
+
+## 11.3 Segmentar un vector (7)
+### Números (3)
+
+&gt; Characteres especiales: `£10`, `10%`
+
+
+```r
+parse_number("$100")
+```
+
+```
+## [1] 100
+```
+
+```r
+parse_number("20%")
+```
+
+```
+## [1] 20
+```
+
+```r
+parse_number("El tiquete tiene un precio de $123.45")
+```
+
+```
+## [1] 123.45
+```
+
+
+---
+
+## 11.3 Segmentar un vector (8)
+### Números (4)
+&gt; Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
+
+
+```r
+# Utilizado en los Estados Unidos de América
+parse_number("$123,456,789")
+```
+
+```
+## [1] 123456789
+```
+
+```r
+# Utilizado en muchas regiones de Europa
+parse_number("123.456.789", locale = locale(grouping_mark = "."))
+```
+
+```
+## [1] 123456789
+```
+
+```r
+# Utilizado en Suiza
+parse_number("123'456'789", locale = locale(grouping_mark = "'"))
+```
+
+```
+## [1] 123456789
+```
+
+---
+
+## 11.3 Segmentar un vector (9)
+
+### Cadenas de texto (_strings_)
+
+&gt; ¿Fácil, no? 
+
+--
+
+Primero, hay que entender como las cadenas de texto son representadas en R:
+
+
+```r
+charToRaw("Roberto")
+```
+
+```
+## [1] 52 6f 62 65 72 74 6f
+```
+
+--
+
+El mapeo de un número hexadecimal a caracteres es conocido como __codificación__ o _encoding_.
+
+Por defecto R usa ASCII (American Standard Code for Information Interchange).
+
+---
+
+## 11.3 Segmentar un vector (10)
+
+### Cadenas de texto (_strings_) (2)
+
+`readr` utiliza UTF-8 (puede codificar __casi__ cualquier caracter).
+
+--
+
+
+```r
+x1 &lt;- "El Ni\xf1o was particularly bad this year"
+x2 &lt;- "\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd"
+x1
+```
+
+```
+## [1] "El Ni\xf1o was particularly bad this year"
+```
+
+```r
+x2
+```
+
+```
+## [1] "\x82\xb1\x82\xf1\x82\u0242\xbf\x82\xcd"
+```
+
+--
+
+
+```r
+parse_character(x1, locale = locale(encoding = "Latin1"))
+```
+
+```
+## [1] "El Niño was particularly bad this year"
+```
+
+```r
+parse_character(x2, locale = locale(encoding = "Shift-JIS"))
+```
+
+```
+## [1] "こんにちは"
+```
+---
+
+## 11.3 Segmentar un vector (11)
+
+### Cadenas de texto (_strings_) (3)
+
+&gt; ¿Cómo encontrar la codificación correcta?
+
+--
+
+Con un milagro.
+
+--
+
+Es broma, aunque la codificación no suele ser documentada. Pero `readr` nos puede ayudar.
+
+.pull-left[
+
+```r
+guess_encoding(charToRaw(x1))
+```
+
+```
+## # A tibble: 2 x 2
+##   encoding   confidence
+##   &lt;chr&gt;           &lt;dbl&gt;
+## 1 ISO-8859-1       0.46
+## 2 ISO-8859-9       0.23
+```
+]
+
+.pull-right[
+
+```r
+guess_encoding(charToRaw(x2))
+```
+
+```
+## # A tibble: 1 x 2
+##   encoding confidence
+##   &lt;chr&gt;         &lt;dbl&gt;
+## 1 KOI8-R         0.42
+```
+]
+
+.footnote[Para aprender más sobre codificación: http://kunststube.net/encoding/.]
+
+---
+
+## 11.3 Segmentar un vector (12)
+
+### Factores
+
+
+```r
+fruta &lt;- c("manzana", "banana")
+parse_factor(c("manzana", "banana", "bananana"), levels = fruta)
+```
+
+```
+## Warning: 1 parsing failure.
+## row col           expected   actual
+##   3  -- value in level set bananana
+```
+
+```
+## [1] manzana banana  &lt;NA&gt;   
+## attr(,"problems")
+## # A tibble: 1 x 4
+##     row   col expected           actual  
+##   &lt;int&gt; &lt;int&gt; &lt;chr&gt;              &lt;chr&gt;   
+## 1     3    NA value in level set bananana
+## Levels: manzana banana
+```
+
+---
+
+## 11.3 Segmentar un vector (13)
+
+### Fechas, fechas-horas y horas
+
+Cada segmentador tiene un compartamiento ligeramente distinto:
+
+- `parse_datetime()`: Número de segundos desde `00:00 01-01-1970`
+
+&gt; Los componentes deben estar ordenados de mayor a menor: año, mes, día, hora, minuto, segundo.
+
+--
+
+
+```r
+parse_datetime("2010-10-01T2010")
+```
+
+```
+## [1] "2010-10-01 20:10:00 UTC"
+```
+
+```r
+parse_datetime("20101010")
+```
+
+```
+## [1] "2010-10-10 UTC"
+```
+
+.footnote[Para más detalles sobre el estándard ISO8601: https://en.wikipedia.org/wiki/ISO_8601]
+
+---
+
+## 11.3 Segmentar un vector (14)
+
+### Fechas, fechas-horas y horas (2)
+
+- `parse_date()`: Número de días desde `01-01-1970`
+
+&gt; asume un año de cuatro dígitos, un guión `-` o `/`, el mes, un guión `-` o `/` y luego el día.
+
+--
+
+
+```r
+parse_date("2010-10-01")
+```
+
+```
+## [1] "2010-10-01"
+```
+
+---
+
+## 11.3 Segmentar un vector (15)
+
+### Fechas, fechas-horas y horas (3)
+
+- `parse_time()`: Número de segundos desde `00:00`
+
+&gt; espera la hora, `:`, minutos, opcionalmente `:` y segundos, y un especificador opcional am/pm:
+
+--
+
+
+```r
+parse_time("01:10 am")
+```
+
+```
+## 01:10:00
+```
+
+```r
+parse_time("20:10:01")
+```
+
+```
+## 20:10:01
+```
+
+---
+
+## 11.3 Segmentar un vector (16)
+
+### Fechas, fechas-horas y horas (4)
+
+Para usar nuestro propio formato, los siguientes characters pueden ser usados:
+
+- __Año__
+
+`%Y` (4 dígitos).
+
+`%y` (2 dígitos); 00-69 -&gt; 2000-2069, 70-99 -&gt; 1970-1999.
+
+--
+
+- __Mes__
+
+`%m` (2 dígitos).
+
+`%b` (nombre abreviado, como "ene").
+
+`%B` (nombre completo, como "enero").
+
+--
+
+- __Día__
+
+`%d` (2 dígitos).
+
+`%e` (espacio opcional destacado).
+
+---
+
+## 11.3 Segmentar un vector (17)
+
+### Fechas, fechas-horas y horas (5)
+
+- __Hora__
+
+`%H` 0-23 horas.
+
+`%I` 0-12, debe utilizarse con `%p`.
+
+`%p` indicador AM/PM.
+
+`%M` minutos.
+
+`%S` segundos enteros.
+
+`%OS` segundos reales.
+
+`%Z` Zona horaria (como nombre, por ejemplo, `America/Chicago`).
+
+`%z` (como complemento para las UTC, por ejemplo, +0800).
+
+---
+
+## 11.3 Segmentar un vector (18)
+
+### Fechas, fechas-horas y horas (6)
+
+
+
+```r
+parse_date("01/02/15", "%m/%d/%y")
+```
+
+```
+## [1] "2015-01-02"
+```
+
+```r
+parse_date("01/02/15", "%d/%m/%y")
+```
+
+```
+## [1] "2015-02-01"
+```
+
+```r
+parse_date("01/02/15", "%y/%m/%d")
+```
+
+```
+## [1] "2001-02-15"
+```
+
+--
+
+
+```r
+parse_date("1 janvier 2015", "%d %B %Y", locale = locale("fr"))
+```
+
+```
+## [1] "2015-01-01"
+```
+
+---
+
+### 11.3.5 Ejercicios
+
+1. ¿Cuáles son los argumentos más importantes para `locale()`?
+
+2. ¿Qué pasa si intentas establecer `decimal_mark` y `grouping_mark` como el mismo caracter? ¿Qué pasa con el valor por defecto de `grouping_mark` cuando estableces `decimal_mark` como `,`? ¿Qué pasa con el valor por defecto de `decimal_mark` cuando estableces `grouping_mark` como `.`?
+
+3. No discutimos las opciones de `date_format` y `time_format` para `locale()`. ¿Qué hacen? Construye un ejemplo que muestre cuándo podrían ser útiles.
+
+4. Si vives fuera de EEUU, crea un nuevo objeto locale que contenga las opciones para los tipos de archivo que lees más comúnmente.
+
+5. ¿Cuál es la diferencia entre `read_csv()` y `read_csv2()`?
+
+6. ¿Cuáles son las codificaciones más comunes empleadas en Europa? ¿Cuáles son las codificaciones más comunes utilizadas en Asia? ¿Y en América Latina? Googlea un poco para descubrirlo.
+
+7. Genera el formato correcto de texto para segmentar cada una de las siguientes fechas y horas:
+&lt;br&gt;(_ver en el libro_)
+
+
+
+---
+
+class: center, inverse, middle
+background-image: url("https://i.ytimg.com/vi/WEX70PdrBdU/maxresdefault.jpg")
+
+---
+
+## 11.4 Segmentar un archivo
+
+&gt; Ya aprendimos como segmentar vectores (columnas), ahora vamos aprender sobre segmentación de archivos.
+
+.center[
+![:escala 70%](https://cdn.generadormemes.com/media/created/rdo3cg.jpg)
+]
+
+---
+
+## 11.4 Segmentar un archivo (2)
+
+`readr` utiliza las primeras 1000 filas para deducir el formato de cada columna.
+
+--
+
+
+```r
+guess_parser("2010-10-01")
+```
+
+```
+## [1] "date"
+```
+
+```r
+guess_parser("15:01")
+```
+
+```
+## [1] "time"
+```
+
+```r
+guess_parser(c("TRUE", "FALSE"))
+```
+
+```
+## [1] "logical"
+```
+
+```r
+guess_parser(c("1", "5", "9"))
+```
+
+```
+## [1] "double"
+```
+
+```r
+guess_parser(c("12,352,561"))
+```
+
+```
+## [1] "number"
+```
+
+---
+
+## 11.4 Segmentar un archivo (3)
+
+Internamente, `readr` ejecuta cada una de las siguientes pruebas:
+
+- __lógico:__ contiene solo “F”, “T”, “FALSE”, o “TRUE”.
+
+- __entero:__ contiene solo caracteres numéricos (y ‘-’).
+
+- __doble:__ contiene solo dobles válidos (incluyendo números como ‘4.5e-5’).
+
+- __número:__ contiene dobles válidos con la marca de agrupamiento en su interior.
+
+- __hora:__ coincide con el formato horario por defecto (time_format).
+
+- __fecha:__ coincide con el formato fecha por defecto (date_format).
+
+- __fecha-hora:__ cualquier fecha ISO8601.
+
+---
+
+## 11.4 Segmentar un archivo (4)
+
+### Problemas
+
+- Las primeras 1000 filas no podrían ser suficiente.
+
+- La columna podría tener muchos valores faltantes.
+
+--
+
+
+```r
+desafio &lt;- read_csv(readr_example("challenge.csv"))
+```
+
+```
+## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   x = col_double(),
+##   y = col_logical()
+## )
+```
+
+```
+## Warning: 1000 parsing failures.
+##  row col           expected     actual                                                                                         file
+## 1001   y 1/0/T/F/TRUE/FALSE 2015-01-16 '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/readr/extdata/challenge.csv'
+## 1002   y 1/0/T/F/TRUE/FALSE 2018-05-18 '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/readr/extdata/challenge.csv'
+## 1003   y 1/0/T/F/TRUE/FALSE 2015-09-05 '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/readr/extdata/challenge.csv'
+## 1004   y 1/0/T/F/TRUE/FALSE 2012-11-28 '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/readr/extdata/challenge.csv'
+## 1005   y 1/0/T/F/TRUE/FALSE 2020-01-13 '/Library/Frameworks/R.framework/Versions/4.0/Resources/library/readr/extdata/challenge.csv'
+## .... ... .................. .......... ............................................................................................
+## See problems(...) for more details.
+```
+
+---
+
+## 11.4 Segmentar un archivo (5)
+
+Veamos qué pasó usando `readr::problems()`:
+
+
+```r
+problems(desafio)
+```
+
+```
+## # A tibble: 1,000 x 5
+##      row col   expected       actual   file                                     
+##    &lt;int&gt; &lt;chr&gt; &lt;chr&gt;          &lt;chr&gt;    &lt;chr&gt;                                    
+##  1  1001 y     1/0/T/F/TRUE/… 2015-01… '/Library/Frameworks/R.framework/Version…
+##  2  1002 y     1/0/T/F/TRUE/… 2018-05… '/Library/Frameworks/R.framework/Version…
+##  3  1003 y     1/0/T/F/TRUE/… 2015-09… '/Library/Frameworks/R.framework/Version…
+##  4  1004 y     1/0/T/F/TRUE/… 2012-11… '/Library/Frameworks/R.framework/Version…
+##  5  1005 y     1/0/T/F/TRUE/… 2020-01… '/Library/Frameworks/R.framework/Version…
+##  6  1006 y     1/0/T/F/TRUE/… 2016-04… '/Library/Frameworks/R.framework/Version…
+##  7  1007 y     1/0/T/F/TRUE/… 2011-05… '/Library/Frameworks/R.framework/Version…
+##  8  1008 y     1/0/T/F/TRUE/… 2020-07… '/Library/Frameworks/R.framework/Version…
+##  9  1009 y     1/0/T/F/TRUE/… 2011-04… '/Library/Frameworks/R.framework/Version…
+## 10  1010 y     1/0/T/F/TRUE/… 2010-05… '/Library/Frameworks/R.framework/Version…
+## # … with 990 more rows
+```
+
+---
+
+## 11.4 Segmentar un archivo (6)
+
+Siguiente paso, indicar a `readr` cómo debe segmentar las columnas:
+
+
+```r
+desafio &lt;- read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_date()
+  )
+)
+
+tail(desafio)
+```
+
+```
+## # A tibble: 6 x 2
+##       x y         
+##   &lt;dbl&gt; &lt;date&gt;    
+## 1 0.805 2019-11-21
+## 2 0.164 2018-03-29
+## 3 0.472 2014-08-04
+## 4 0.718 2015-08-16
+## 5 0.270 2020-02-04
+## 6 0.608 2019-01-06
+```
+
+
+---
+
+## 11.4 Segmentar un archivo (7)
+
+&gt; Cada función `parse_*()` tiene un equivalente `col_*()`.
+
+--
+
+### Otras estrategias
+
+- Incrementar el número de filas usadas para adivinar el tipo de datos
+
+
+```r
+desafio2 &lt;- read_csv(readr_example("challenge.csv"), guess_max = 1001)
+```
+
+```
+## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   x = col_double(),
+##   y = col_date(format = "")
+## )
+```
+
+---
+
+## 11.4 Segmentar un archivo (8)
+
+### Otras estrategias (2)
+
+- Leer todas las columnas como vectores de caracteres:
+
+
+```r
+desafio &lt;- read_csv(readr_example("challenge.csv"), 
+  col_types = cols(.default = col_character())
+)
+```
+
+En combinación con `readr::type_convert()` puede ser muy útil:
+
+
+```r
+df &lt;- tribble(
+  ~x,  ~y,
+  "1", "1.21",
+  "2", "2.32",
+  "3", "4.56"
+)
+```
+
+---
+
+## 11.4 Segmentar un archivo (9)
+
+### Otras estrategias (3)
+
+
+```r
+# Fíjate en los tipos de columna
+type_convert(df)
+```
+
+```
+## 
+## ── Column specification ────────────────────────────────────────────────────────
+## cols(
+##   x = col_double(),
+##   y = col_double()
+## )
+```
+
+```
+## # A tibble: 3 x 2
+##       x     y
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1     1  1.21
+## 2     2  2.32
+## 3     3  4.56
+```
+
+---
+
+## 11.4 Segmentar un archivo (10)
+
+### Otras estrategias (4)
+
+- Leer archivos largos en pequeños groupos, usando `n_max`.
+
+- Leer archivos por línea, usando `readr::read_lines()`.
+
+---
+
+## 11.5 Escribir a un archivo
+
+`readr` también puede escribir archivos, usando `write_csv()` y `write_tsv()`.
+
+--
+
+__Ventajas:__
+
+- Archivos codificados en UTF-8.
+
+- Fechas y fechas-horas en formato ISO8601.
+
+--
+
+
+```r
+write_csv(desafio, "desafio.csv")
+```
+
+--
+
+El único problema es que información sobre el tipo de datos de cada columna, __NO__ es almacenado en el CSV.
+
+.right[
+![:escala 40%](http://assets.stickpng.com/thumbs/5ee772d099588c0004aa684b.png)
+]
+
+---
+
+## 11.5 Escribir a un archivo (2)
+
+Alternativamente, para conservar los metadatos, podríamos almacenar nuestros datos usando las siguientes funciones:
+
+1. `write_rds()` y `read_rds()` que "envuelven" nuestros datos e incluyen sus propiedades.
+
+
+```r
+write_rds(desafio, "desafio.rds")
+read_rds("desafio.rds")
+```
+
+```
+## # A tibble: 2,000 x 2
+##    x     y    
+##    &lt;chr&gt; &lt;chr&gt;
+##  1 404   &lt;NA&gt; 
+##  2 4172  &lt;NA&gt; 
+##  3 3004  &lt;NA&gt; 
+##  4 787   &lt;NA&gt; 
+##  5 37    &lt;NA&gt; 
+##  6 2332  &lt;NA&gt; 
+##  7 2489  &lt;NA&gt; 
+##  8 1449  &lt;NA&gt; 
+##  9 3665  &lt;NA&gt; 
+## 10 3863  &lt;NA&gt; 
+## # … with 1,990 more rows
+```
+
+---
+
+## 11.5 Escribir a un archivo (3)
+
+2. Usando el paquete __feather__ (este formato es compatible con otros lenguajes de programación)
+
+
+```r
+library(feather)
+write_feather(desafio, "desafio.feather")
+read_feather("desafio.feather")
+```
+
+```
+## # A tibble: 2,000 x 2
+##    x     y    
+##    &lt;chr&gt; &lt;chr&gt;
+##  1 404   &lt;NA&gt; 
+##  2 4172  &lt;NA&gt; 
+##  3 3004  &lt;NA&gt; 
+##  4 787   &lt;NA&gt; 
+##  5 37    &lt;NA&gt; 
+##  6 2332  &lt;NA&gt; 
+##  7 2489  &lt;NA&gt; 
+##  8 1449  &lt;NA&gt; 
+##  9 3665  &lt;NA&gt; 
+## 10 3863  &lt;NA&gt; 
+## # … with 1,990 more rows
+```
+
+---
+
+## 11.6 Otros tipos de datos
+
+Para datos rectangulares:
+
+- __haven__ lee archivos SPSS, Stata y SAS.
+
+- __readxl__ lee archivos excel (tanto .xls como .xlsx).
+
+- __DBI__, junto con un backend de base de datos específico (e.g. RMySQL, RSQLite, RPostgreSQL, etc.) te permite correr consultas SQL contra una base de datos y devolver un data frame.
+
+Para datos jerárquicos: utiliza __jsonlite__ (de Jeroen Ooms) para json y __xml2__ para XML. Jenny Bryan tiene algunos ejemplos muy bien trabajados en https://jennybc.github.io/purrr-tutorial/.
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+<style>
+.logo {
+  background-image: url(https://camo.githubusercontent.com/ec147d1aa3e1a06269454b3a7b56a24a86020a85943cc1387856cd9202e424a3/68747470733a2f2f723464732d656e2d657370616e696f6c2e6e65746c6966792e6170702f6865785f723464732d65732e706e67);
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  width: 110px;
+  height: 128px;
+  z-index: 0;
+}
+</style>
+
+<script>
+document
+  .querySelectorAll(
+    '.remark-slide-content' +
+    ':not(.title-slide)' +
+    // add additional classes to exclude here, e.g.
+    ':not(.inverse)' +
+    ':not(.hide-logo)'
+  )
+  .forEach(el => {
+    el.innerHTML += '<div class="logo"></div>';
+  });
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
