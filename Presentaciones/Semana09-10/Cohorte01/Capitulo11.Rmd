@@ -1,0 +1,776 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 11: Importación de datos"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2021-02-16 y 2021-02-23
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+## Contenidos
+
+* 11.1 Introducción
+
+* 11.2 Comenzando
+
+* 11.3 Segmentar un vector
+
+* 11.4 Segmentar un archivo
+
+* 11.5 Escribir a un archivo
+
+* 11.6 Otros tipos de datos
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r}
+if (!require(tidyverse))
+  install.packages("tidyverse")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## 11.1 Introducción
+
+.center[
+![:escala 85%](https://github.com/allisonhorst/stats-illustrations/raw/master/rstats-artwork/data_cowboy.png)
+]
+
+.footnote[Fuente: Allison Horst  https://github.com/allisonhorst/stats-illustrations]
+
+---
+
+## 11.2 Comenzando
+
+##### Archivos planos a `data.frame`s:
+
+- `readr::read_csv()` (`,`), `readr::read_csv2` (`;`), `readr::read_tsv()` y `readr::read_delim()`.
+
+- `readr::read_fwf()`: archivos de ancho fijo. `readr::fwf_widths()` y `readr::fwf_positions()`.
+
+- `readr::read_log()`: archivos de registro estilo Apache.
+
+---
+
+## 11.2 Comenzando (2)
+
+```{r}
+alturas <- read_csv("datos/alturas.csv")
+```
+
+---
+
+## 11.2 Comenzando (3)
+
+```{r}
+read_csv("a,b,c
+         1,2,3
+         4,5,6")
+```
+
+---
+
+## 11.2 Comenzando (4)
+
+##### Algunas opciones útiles:
+
+Ignorar filas
+
+```{r}
+read_csv("La primera línea de metadata 
+         La segunda línea de metadata
+         x,y,z
+         1,2,3", skip = 2)
+```
+
+--
+
+Ignorar comentarios
+
+```{r}
+read_csv("# Un comentario que quiero ignorar
+         x,y,z
+         1,2,3", comment = "#")
+```
+
+---
+
+## 11.2 Comenzando (5)
+
+Datos sin nombres de columna
+```{r}
+read_csv("1,2,3
+         4,5,6", col_names = FALSE)
+```
+
+--
+
+Alternativamente,
+
+```{r}
+read_csv("1,2,3
+         4,5,6", col_names = c("x", "y", "z"))
+```
+
+
+---
+
+## 11.2 Comenzando (6)
+
+Elegir qué valores son interpretados como faltantes (`NA`s)
+```{r}
+read_csv("a,b,c
+         1,2,.", na = ".")
+```
+
+---
+
+## 11.2 Comenzando (7)
+
+> ¿Y por qué no usar las funciones base de R? Como `read.csv()`
+
+--
+
+- Rendimiento: las funciones en `readr` son hasta 10 veces más rápidas.
+
+  > Y para set de datos muy grandes, `data.table` es una mejor opción.
+
+- Producen tibbles y con ello todos los beneficios discutidos en el capítulo 10.
+
+- Reproducibilidad: funciones de base R pueden compartarse distinto de acuerdo al sistema operativo.
+
+---
+
+### 11.2.2 Ejercicios
+
+1. ¿Qué función utilizarías para leer un archivo donde los campos están separados con “|”?
+
+2. Además de `file`, `skip` y `comment`, ¿qué otros argumentos tienen en común `read_csv()` y `read_tsv()`?
+
+3. ¿Cuáles son los argumentos más importantes de `read_fwf()`?
+
+4. Algunas veces las cadenas de caracteres en un archivo csv contienen comas. Para evitar que causen problemas, deben estar rodeadas por comillas, como `"` o `'`. Por convención, `read_csv()` asume que el caracter de separación será `"`.¿Qué argumentos debes especificar para leer el siguiente texto en un data frame?
+  ```{r, eval = FALSE}
+  "x,y\n1,'a,b'"
+  ```
+
+5. Identifica qué está mal en cada una de los siguientes archivos csv en línea (_inline_). ¿Qué pasa cuando corres el código?
+  ```{r, eval = FALSE}
+  read_csv("a,b\n1,2,3\n4,5,6")
+  read_csv("a,b,c\n1,2\n1,2,3,4")
+  read_csv("a,b\n\"1")
+  read_csv("a,b\n1,2\na,b")
+  read_csv("a;b\n1;3")
+  ```
+
+---
+
+## 11.3 Segmentar un vector
+
+> ¿Cómo son los tipos de columna reconocidos?
+
+--
+
+`readr::parse_*`: convierten vectores de caracteres y los convierten al tipo apropiado.
+
+--
+
+```{r}
+str(parse_logical(c("TRUE", "FALSE", "NA")))
+str(parse_integer(c("1", "2", "3")))
+str(parse_date(c("2010-01-01", "1979-10-14")))
+```
+
+---
+
+## 11.3 Segmentar un vector (2)
+
+Si la segmentación falla:
+
+```{r}
+x <- parse_integer(c("123", "345", "abc", "123.45"))
+x
+```
+
+---
+
+## 11.3 Segmentar un vector (3)
+
+Si hay muchas fallas de segmentación:
+
+```{r}
+readr::problems(x)
+```
+
+---
+
+## 11.3 Segmentar un vector (4)
+
+Segmentadores más importantes:
+
+1. `parse_logical()` y `parse_integer()`: valores lógicos y enteros.
+  
+2. `parse_double()` (estricto) y `parse_number()` (flexible)
+
+3. `parse_character()`: characteres
+  > Cuidado con characteres especiales, como acentos. <br>
+  > La opción `enconding` será muy útil.
+
+4. `parse_factor()`: factores
+
+5. `parse_datetime()`, `parse_date()` y `parse_time()`: fechas y horas.
+
+---
+
+## 11.3 Segmentar un vector (5)
+
+### Números
+
+> ¿Qué puede salir mal?
+
+--
+
+1. Formato para separar decimales, `,` versus `.`
+
+2. Characteres especiales: `£10`, `10%`
+
+3. Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
+
+
+---
+
+## 11.3 Segmentar un vector (6)
+### Números (2)
+
+> Formato para separar decimales, `,` versus `.`
+
+```{r}
+parse_double("1.23")
+parse_double("1,23", locale = locale(decimal_mark = ","))
+```
+
+
+---
+
+## 11.3 Segmentar un vector (7)
+### Números (3)
+
+> Characteres especiales: `£10`, `10%`
+
+```{r}
+parse_number("$100")
+parse_number("20%")
+parse_number("El tiquete tiene un precio de $123.45")
+```
+
+
+---
+
+## 11.3 Segmentar un vector (8)
+### Números (4)
+> Agrupación para mejor legibilidad: `1,000,000,000` vs `1000000000`
+
+```{r}
+# Utilizado en los Estados Unidos de América
+parse_number("$123,456,789")
+# Utilizado en muchas regiones de Europa
+parse_number("123.456.789", locale = locale(grouping_mark = "."))
+# Utilizado en Suiza
+parse_number("123'456'789", locale = locale(grouping_mark = "'"))
+```
+
+---
+
+## 11.3 Segmentar un vector (9)
+
+### Cadenas de texto (_strings_)
+
+> ¿Fácil, no? 
+
+--
+
+Primero, hay que entender como las cadenas de texto son representadas en R:
+
+```{r}
+charToRaw("Roberto")
+```
+
+--
+
+El mapeo de un número hexadecimal a caracteres es conocido como __codificación__ o _encoding_.
+
+Por defecto R usa ASCII (American Standard Code for Information Interchange).
+
+---
+
+## 11.3 Segmentar un vector (10)
+
+### Cadenas de texto (_strings_) (2)
+
+`readr` utiliza UTF-8 (puede codificar __casi__ cualquier caracter).
+
+--
+
+```{r}
+x1 <- "El Ni\xf1o was particularly bad this year"
+x2 <- "\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd"
+x1
+x2
+```
+
+--
+
+```{r}
+parse_character(x1, locale = locale(encoding = "Latin1"))
+parse_character(x2, locale = locale(encoding = "Shift-JIS"))
+```
+---
+
+## 11.3 Segmentar un vector (11)
+
+### Cadenas de texto (_strings_) (3)
+
+> ¿Cómo encontrar la codificación correcta?
+
+--
+
+Con un milagro.
+
+--
+
+Es broma, aunque la codificación no suele ser documentada. Pero `readr` nos puede ayudar.
+
+.pull-left[
+```{r}
+guess_encoding(charToRaw(x1))
+```
+]
+
+.pull-right[
+```{r}
+guess_encoding(charToRaw(x2))
+```
+]
+
+.footnote[Para aprender más sobre codificación: http://kunststube.net/encoding/.]
+
+---
+
+## 11.3 Segmentar un vector (12)
+
+### Factores
+
+```{r}
+fruta <- c("manzana", "banana")
+parse_factor(c("manzana", "banana", "bananana"), levels = fruta)
+```
+
+---
+
+## 11.3 Segmentar un vector (13)
+
+### Fechas, fechas-horas y horas
+
+Cada segmentador tiene un compartamiento ligeramente distinto:
+
+- `parse_datetime()`: Número de segundos desde `00:00 01-01-1970`
+
+> Los componentes deben estar ordenados de mayor a menor: año, mes, día, hora, minuto, segundo.
+
+--
+
+```{r}
+parse_datetime("2010-10-01T2010")
+parse_datetime("20101010")
+```
+
+.footnote[Para más detalles sobre el estándard ISO8601: https://en.wikipedia.org/wiki/ISO_8601]
+
+---
+
+## 11.3 Segmentar un vector (14)
+
+### Fechas, fechas-horas y horas (2)
+
+- `parse_date()`: Número de días desde `01-01-1970`
+
+> asume un año de cuatro dígitos, un guión `-` o `/`, el mes, un guión `-` o `/` y luego el día.
+
+--
+
+```{r}
+parse_date("2010-10-01")
+```
+
+---
+
+## 11.3 Segmentar un vector (15)
+
+### Fechas, fechas-horas y horas (3)
+
+- `parse_time()`: Número de segundos desde `00:00`
+
+> espera la hora, `:`, minutos, opcionalmente `:` y segundos, y un especificador opcional am/pm:
+
+--
+
+```{r}
+parse_time("01:10 am")
+parse_time("20:10:01")
+```
+
+---
+
+## 11.3 Segmentar un vector (16)
+
+### Fechas, fechas-horas y horas (4)
+
+Para usar nuestro propio formato, los siguientes characters pueden ser usados:
+
+- __Año__
+
+`%Y` (4 dígitos).
+
+`%y` (2 dígitos); 00-69 -> 2000-2069, 70-99 -> 1970-1999.
+
+--
+
+- __Mes__
+
+`%m` (2 dígitos).
+
+`%b` (nombre abreviado, como "ene").
+
+`%B` (nombre completo, como "enero").
+
+--
+
+- __Día__
+
+`%d` (2 dígitos).
+
+`%e` (espacio opcional destacado).
+
+---
+
+## 11.3 Segmentar un vector (17)
+
+### Fechas, fechas-horas y horas (5)
+
+- __Hora__
+
+`%H` 0-23 horas.
+
+`%I` 0-12, debe utilizarse con `%p`.
+
+`%p` indicador AM/PM.
+
+`%M` minutos.
+
+`%S` segundos enteros.
+
+`%OS` segundos reales.
+
+`%Z` Zona horaria (como nombre, por ejemplo, `America/Chicago`).
+
+`%z` (como complemento para las UTC, por ejemplo, +0800).
+
+---
+
+## 11.3 Segmentar un vector (18)
+
+### Fechas, fechas-horas y horas (6)
+
+
+```{r}
+parse_date("01/02/15", "%m/%d/%y")
+parse_date("01/02/15", "%d/%m/%y")
+parse_date("01/02/15", "%y/%m/%d")
+```
+
+--
+
+```{r}
+parse_date("1 janvier 2015", "%d %B %Y", locale = locale("fr"))
+```
+
+---
+
+### 11.3.5 Ejercicios
+
+1. ¿Cuáles son los argumentos más importantes para `locale()`?
+
+2. ¿Qué pasa si intentas establecer `decimal_mark` y `grouping_mark` como el mismo caracter? ¿Qué pasa con el valor por defecto de `grouping_mark` cuando estableces `decimal_mark` como `,`? ¿Qué pasa con el valor por defecto de `decimal_mark` cuando estableces `grouping_mark` como `.`?
+
+3. No discutimos las opciones de `date_format` y `time_format` para `locale()`. ¿Qué hacen? Construye un ejemplo que muestre cuándo podrían ser útiles.
+
+4. Si vives fuera de EEUU, crea un nuevo objeto locale que contenga las opciones para los tipos de archivo que lees más comúnmente.
+
+5. ¿Cuál es la diferencia entre `read_csv()` y `read_csv2()`?
+
+6. ¿Cuáles son las codificaciones más comunes empleadas en Europa? ¿Cuáles son las codificaciones más comunes utilizadas en Asia? ¿Y en América Latina? Googlea un poco para descubrirlo.
+
+7. Genera el formato correcto de texto para segmentar cada una de las siguientes fechas y horas:
+<br>(_ver en el libro_)
+
+```{r, echo = FALSE}
+d1 <- "Enero 1, 2010"
+d2 <- "2015-Ene-07"
+d3 <- "06-Jun-2017"
+d4 <- c("Augosto 19 (2015)", "Julio 1 (2015)")
+d5 <- "12/30/14" # Diciembre 30, 2014
+t1 <- "1705"
+t2 <- "11:15:10.12 PM"
+```
+
+---
+
+class: center, inverse, middle
+background-image: url("https://i.ytimg.com/vi/WEX70PdrBdU/maxresdefault.jpg")
+
+---
+
+## 11.4 Segmentar un archivo
+
+> Ya aprendimos como segmentar vectores (columnas), ahora vamos aprender sobre segmentación de archivos.
+
+.center[
+![:escala 70%](https://cdn.generadormemes.com/media/created/rdo3cg.jpg)
+]
+
+---
+
+## 11.4 Segmentar un archivo (2)
+
+`readr` utiliza las primeras 1000 filas para deducir el formato de cada columna.
+
+--
+
+```{r}
+guess_parser("2010-10-01")
+guess_parser("15:01")
+guess_parser(c("TRUE", "FALSE"))
+guess_parser(c("1", "5", "9"))
+guess_parser(c("12,352,561"))
+```
+
+---
+
+## 11.4 Segmentar un archivo (3)
+
+Internamente, `readr` ejecuta cada una de las siguientes pruebas:
+
+- __lógico:__ contiene solo “F”, “T”, “FALSE”, o “TRUE”.
+
+- __entero:__ contiene solo caracteres numéricos (y ‘-’).
+
+- __doble:__ contiene solo dobles válidos (incluyendo números como ‘4.5e-5’).
+
+- __número:__ contiene dobles válidos con la marca de agrupamiento en su interior.
+
+- __hora:__ coincide con el formato horario por defecto (time_format).
+
+- __fecha:__ coincide con el formato fecha por defecto (date_format).
+
+- __fecha-hora:__ cualquier fecha ISO8601.
+
+---
+
+## 11.4 Segmentar un archivo (4)
+
+### Problemas
+
+- Las primeras 1000 filas no podrían ser suficiente.
+
+- La columna podría tener muchos valores faltantes.
+
+--
+
+```{r}
+desafio <- read_csv(readr_example("challenge.csv"))
+```
+
+---
+
+## 11.4 Segmentar un archivo (5)
+
+Veamos qué pasó usando `readr::problems()`:
+
+```{r}
+problems(desafio)
+```
+
+---
+
+## 11.4 Segmentar un archivo (6)
+
+Siguiente paso, indicar a `readr` cómo debe segmentar las columnas:
+
+```{r}
+desafio <- read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_date()
+  )
+)
+
+tail(desafio)
+```
+
+
+---
+
+## 11.4 Segmentar un archivo (7)
+
+> Cada función `parse_*()` tiene un equivalente `col_*()`.
+
+--
+
+### Otras estrategias
+
+- Incrementar el número de filas usadas para adivinar el tipo de datos
+
+```{r}
+desafio2 <- read_csv(readr_example("challenge.csv"), guess_max = 1001)
+```
+
+---
+
+## 11.4 Segmentar un archivo (8)
+
+### Otras estrategias (2)
+
+- Leer todas las columnas como vectores de caracteres:
+
+```{r}
+desafio <- read_csv(readr_example("challenge.csv"), 
+  col_types = cols(.default = col_character())
+)
+```
+
+En combinación con `readr::type_convert()` puede ser muy útil:
+
+```{r}
+df <- tribble(
+  ~x,  ~y,
+  "1", "1.21",
+  "2", "2.32",
+  "3", "4.56"
+)
+```
+
+---
+
+## 11.4 Segmentar un archivo (9)
+
+### Otras estrategias (3)
+
+```{r}
+# Fíjate en los tipos de columna
+type_convert(df)
+```
+
+---
+
+## 11.4 Segmentar un archivo (10)
+
+### Otras estrategias (4)
+
+- Leer archivos largos en pequeños groupos, usando `n_max`.
+
+- Leer archivos por línea, usando `readr::read_lines()`.
+
+---
+
+## 11.5 Escribir a un archivo
+
+`readr` también puede escribir archivos, usando `write_csv()` y `write_tsv()`.
+
+--
+
+__Ventajas:__
+
+- Archivos codificados en UTF-8.
+
+- Fechas y fechas-horas en formato ISO8601.
+
+--
+
+```{r}
+write_csv(desafio, "desafio.csv")
+```
+
+--
+
+El único problema es que información sobre el tipo de datos de cada columna, __NO__ es almacenado en el CSV.
+
+.right[
+![:escala 40%](http://assets.stickpng.com/thumbs/5ee772d099588c0004aa684b.png)
+]
+
+---
+
+## 11.5 Escribir a un archivo (2)
+
+Alternativamente, para conservar los metadatos, podríamos almacenar nuestros datos usando las siguientes funciones:
+
+1. `write_rds()` y `read_rds()` que "envuelven" nuestros datos e incluyen sus propiedades.
+
+```{r}
+write_rds(desafio, "desafio.rds")
+read_rds("desafio.rds")
+```
+
+---
+
+## 11.5 Escribir a un archivo (3)
+
+2. Usando el paquete __feather__ (este formato es compatible con otros lenguajes de programación)
+
+```{r}
+library(feather)
+write_feather(desafio, "desafio.feather")
+read_feather("desafio.feather")
+```
+
+---
+
+## 11.6 Otros tipos de datos
+
+Para datos rectangulares:
+
+- __haven__ lee archivos SPSS, Stata y SAS.
+
+- __readxl__ lee archivos excel (tanto .xls como .xlsx).
+
+- __DBI__, junto con un backend de base de datos específico (e.g. RMySQL, RSQLite, RPostgreSQL, etc.) te permite correr consultas SQL contra una base de datos y devolver un data frame.
+
+Para datos jerárquicos: utiliza __jsonlite__ (de Jeroen Ooms) para json y __xml2__ para XML. Jenny Bryan tiene algunos ejemplos muy bien trabajados en https://jennybc.github.io/purrr-tutorial/.
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?
