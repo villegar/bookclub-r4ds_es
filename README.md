@@ -20,12 +20,11 @@ Este repositorio tiene 3 directorios principales:
 
 *Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2021-03-02 - Capítulo 12 - Datos ordenados - Luis Francisco Gómez López
+- 2021-03-09 - Capítulo 13 - Datos relacionales - Roberto Villegas-Diaz
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2021-03-09 - Capítulo 13 - Datos relacionales
 - 2021-03-16 - Capítulo 14 - Cadenas de caracteres
 - 2021-03-23 - Capítulo 15 - Factores
 - 2021-03-30 - Capítulo 16 - Fechas y horas
@@ -81,3 +80,8 @@ Capítulo 10 - Tibbles
 Capítulo 11 - Importación de datos
 
 - Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana09-10/Cohorte01/Capitulo11.html) | Videos: PARTE 1 | PARTE 2)
+
+Capítulo 12 - Datos ordenados
+
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana11/Cohorte01/012_datos_ordenados.html) | VIDEO)
+
