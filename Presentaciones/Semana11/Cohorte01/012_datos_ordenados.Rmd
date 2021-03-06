@@ -1,0 +1,345 @@
+---
+title: |
+  | R para Ciencia de Datos 
+  | Club de Lectura r4ds
+  | Cap 12 
+date: 2021-02-21 16:41:56 GMT -05:00
+output: slidy_presentation
+bibliography: R_for_data_science.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      fig.align  = 'center', 
+                      fig.height = 4, 
+                      fig.width  = 12)
+```
+
+```{r message = FALSE}
+
+library(tidyverse)
+library(datos)
+library(knitr)
+library(kableExtra)
+```
+
+# Datos ordenados
+
+En [@grolemund_r_2019, Cap 12] aprenderás a:
+
+- Una forma consistente de ordenar datos 
+- Herramientas del paquete `tidyr`:
+
+    - https://tidyr.tidyverse.org/
+
+- Definición de datos ordenados [@wickham_tidy_2014] 
+
+    - Cada variable forma una columa
+    - Cada observación forma una fila
+    - Cada valor debe estar en su propia celda
+    - Cada tipo de unidad de observación forma una tabla
+
+# Datos no ordenados
+
+- Un ejemplo [@hadley_wickham_tidy_2011]
+
+```{r}
+
+tibble(` `             = c("Hombre", "Mujer"),
+       Embarazo      = c(0, 1),
+       `No Embarazo` = c(5, 4)) %>% 
+  kable(align = "c") %>% 
+  kable_styling(position = "center", full_width = FALSE)
+```
+
+- Ordenando los datos
+
+    - No se cumple "Cada tipo de unidad de observación forma una tabla"
+    
+        - Los datos estan agregados
+
+```{r }
+
+tibble(` `             = c("Hombre", "Mujer"),
+       Embarazado      = c(0, 1),
+       `No Embarazado` = c(5, 4)) %>% 
+  set_names(nm = c("genero", "embarazo", "no embarazo")) %>% 
+  pivot_longer(cols      = 2:3, 
+               names_to  = "estado", 
+               values_to = "frecuencia") %>% 
+  kable(align = "c") %>% 
+  kable_styling(position = "center", full_width = FALSE)
+```
+
+# Datos no ordenados
+
+- Ordenación ideal de datos
+
+```{r}
+
+tibble(id = 1:10,
+       estado = c(rep_len("hombre", 5), rep_len("mujer", 5)),
+       genero = c(rep_len("no embarazo", 5), "embarazo", rep_len("no embarazo", 4))) %>% 
+  kable(align = "c") %>% 
+  kable_styling(position = "center", full_width = FALSE)
+```
+
+# Pivotear
+
+- Identificar las variables
+- Identificar las observaciones
+
+    - Algunas veces una variable esta distribuida en varias columnas
+    
+        - Usar `pivot_longer`
+    
+    - Algunas veces una variable esta distribuida en varias filas
+    
+        - Usar `pivot_wider`
+        
+# Pivotear
+
+## `pivot_longer`
+
+- tibble inicial donde la variable año se encuentra en diferentes columnas
+
+```{r}
+
+tabla4a
+```
+
+- Aplicando `pivot_longer`
+
+```{r echo=TRUE}
+
+tabla4a %>% 
+  pivot_longer(cols      = c(`1999`, `2000`), 
+               names_to  = "anio", 
+               values_to = "casos")
+```
+
+# Pivotear
+
+## `pivot_wider`
+
+- tibble inicial donde las variables casos y población se encuentra en diferentes filas
+
+```{r}
+
+tabla2
+```
+
+- Aplicando `pivot_wider`
+
+```{r echo=TRUE}
+
+tabla2 %>% 
+  pivot_wider(id_cols = c(pais, anio), 
+              names_from = tipo, 
+              values_from = cuenta)
+```
+
+# Separando y uniendo
+
+- `separate`
+
+    - Se utiliza cuando en una misma columna existen dos o más variables
+
+- `unite`
+
+    - Se utiliza cuando en varias columnas se encuentra una variable
+    
+# Separando y uniendo
+
+## `separate`
+
+```{r}
+
+tabla3
+```
+
+```{r echo=TRUE}
+
+tabla3 %>% 
+  separate(col  = tasa, 
+           into = c("casos", "poblacion"), 
+           sep  = "/", 
+           convert = TRUE)
+```
+
+# Separando y uniendo
+
+## `separate`
+
+- Se puede utilizar también en base a la posición
+
+```{r echo=TRUE}
+
+tabla3 %>% 
+  separate(col  = tasa, 
+           into = c("casos", "poblacion"), 
+           sep  = "/", 
+           convert = TRUE) %>% 
+  separate(col  = anio, 
+           into = c("siglo", "anio"), 
+           sep  = 2)
+```
+
+# Separando y uniendo
+
+## `unite`
+
+```{r}
+
+tabla5
+```
+
+```{r echo=TRUE}
+
+tabla5 %>% 
+  unite(col = "anio",
+        siglo, anio, 
+        sep = "")
+```
+
+# Valores faltantes
+
+- Explícitos: señalados con `NA`
+- Implícitos: no se encuentran señalados en los datos
+
+    + En la fila 4 respecto a la variable `return` existe un valor faltante explícito
+    
+    + El dato del año 2016 para el primer trimestre es un valor faltante implícito
+
+```{r}
+
+stocks <- tibble(
+  year   = c(2015, 2015, 2015, 2015, 2016, 2016, 2016),
+  qtr    = c(   1,    2,    3,    4,    2,    3,    4),
+  return = c(1.88, 0.59, 0.35,   NA, 0.92, 0.17, 2.66)
+)
+
+stocks
+```
+
+# Valores faltantes
+
+- `tidyr::complete` se puede utilizar para convertir algunos valores implícitos en explícitos
+
+    + Encuentra todas las combinaciones posibles de los datos respecto a la columas que se señalen y rellena las columas restantes con valores `NA` por defecto
+    
+        + En este caso utiliza `tidyr::expand`
+
+```{r echo=TRUE}
+
+expand(stocks, year, qtr)
+```
+
+
+```{r echo=TRUE}
+
+stocks %>% 
+  complete(year, qtr)
+```
+
+# Valores faltantes
+
+- Otra herramienta util es `tidyr::fill` que permite llenar valores faltantes explícitos a partir de un valor
+
+```{r}
+
+treatment <- tribble(
+  ~ person,           ~ treatment, ~response,
+  "Derrick Whitmore", 1,           7,
+  NA,                 2,           10,
+  NA,                 3,           9,
+  "Katherine Burke",  1,           4
+)
+
+treatment
+```
+
+```{r echo=TRUE}
+
+treatment %>% 
+  fill(person, 
+       .direction = "down")
+```
+
+# Caso de estudio
+
+- 2014 World Health Organization Global Tuberculosis Report
+
+```{r echo=TRUE}
+
+datos::oms %>% 
+  head()
+```
+
+# Caso de estudio
+
+- 2014 World Health Organization Global Tuberculosis Report
+
+```{r echo=TRUE}
+
+oms %>% 
+  glimpse()
+```
+
+# Caso de estudio
+
+- 2014 World Health Organization Global Tuberculosis Report
+
+```{r echo=TRUE}
+
+oms %>% 
+  pivot_longer(cols = nuevos_fpp_h014:nuevosrecaida_m65, 
+               names_to  = "variables", 
+               values_to = "casos") %>% 
+  mutate(variables = str_replace(string = variables, 
+                                 pattern = "nuevosrecaida",
+                                 replacement = "nuevos_recaida")) %>% 
+  filter(str_detect(string = variables, 
+                    pattern = "nuevos_recaida")) %>% 
+  distinct(variables)
+```
+
+# Caso de estudio
+
+- 2014 World Health Organization Global Tuberculosis Report
+
+```{r echo=TRUE}
+
+oms %>% 
+  pivot_longer(cols = nuevos_fpp_h014:nuevosrecaida_m65, 
+               names_to  = "variables", 
+               values_to = "casos", 
+               values_drop_na = FALSE) %>% 
+  mutate(variables = str_replace(string = variables, 
+                                 pattern = "nuevosrecaida",
+                                 replacement = "nuevos_recaida")) %>%
+  # separar variables en base a un separador
+  separate(col  = variables, 
+           into = c("novedad", "diagnostico", "genero_edad")) %>% 
+  # separar variables en base a una posición
+  separate(col  = genero_edad, 
+           into = c("genero", "rango_edad"), 
+           sep  = 1) %>% 
+  # mejoras adicionales si se quiere a futuro 
+  # separar el los límites del rango de edad
+  mutate(rango_edad = as_factor(rango_edad) %>% 
+                  fct_recode("0_14" = "014", "15_24" = "1524", 
+                             "25_34" = "2534", "35_44" = "3534", 
+                             "45_54" = "4554", "55_64" = "5564", 
+                             "65_mas" = "65"))
+```
+
+# Datos no-ordenados
+
+- ¿Por qué utilizarlos?
+
+    - Pueden tener ventajas sustanciales de rendimiento o de espacio
+    - Diferentes campos han desarrollado sus propias convenciones para almacenar datos que pueden ser bastante diferentes a las convenciones de los datos ordenados 
+
+# Referencias
