@@ -66,7 +66,7 @@ Capítulo 7 Análisis exploratorio de datos (EDA)
   
 Capítulo 8 - Flujo de trabajo: proyectos
 
-- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/008_flujo_trabajo.html) | VIDEO)
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/008_flujo_trabajo.html) | [Video](https://youtu.be/nbzX_fzu84k))
 
 ##### Manejar o domar datos
 Capítulo 9 - Introducción
@@ -79,9 +79,9 @@ Capítulo 10 - Tibbles
 
 Capítulo 11 - Importación de datos
 
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana09-10/Cohorte01/Capitulo11.html) | Videos: PARTE 1 | PARTE 2)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana09-10/Cohorte01/Capitulo11.html) | Videos: [Parte 1](https://youtu.be/d814H-wcoEc) | [Parte 2](https://youtu.be/VdAdOuvxlOU))
 
 Capítulo 12 - Datos ordenados
 
-- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana11/Cohorte01/012_datos_ordenados.html) | VIDEO)
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana11/Cohorte01/012_datos_ordenados.html) | [Video](https://youtu.be/24fuHYagf9k))
 
