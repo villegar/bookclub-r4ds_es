@@ -20,14 +20,14 @@ Este repositorio tiene 3 directorios principales:
 
 *Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
 
-- 2021-03-09 - Capítulo 13 - Datos relacionales - Roberto Villegas-Diaz
+- 2021-03-16 - Capítulo 13 - Datos relacionales - Roberto Villegas-Diaz
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2021-03-16 - Capítulo 14 - Cadenas de caracteres
-- 2021-03-23 - Capítulo 15 - Factores
-- 2021-03-30 - Capítulo 16 - Fechas y horas
+- 2021-03-23 y 2021-03-30 - Capítulo 14 - Cadenas de caracteres
+- 2021-04-06 - Capítulo 15 - Factores
+- 2021-04-06 - Capítulo 16 - Fechas y horas
 
 </details>
 <hr>
@@ -62,7 +62,7 @@ Capítulo 6 Flujo de trabajo: Scripts
 
 Capítulo 7 Análisis exploratorio de datos (EDA)
 
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte01/Capitulo07.html) | Videos: [Parte 1](https://youtu.be/f1ZGqZvt0ws?t=770) | PARTE 2)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana06-07/Cohorte01/Capitulo07.html) | Videos: [Parte 1](https://youtu.be/f1ZGqZvt0ws?t=770) | [Parte 2](https://youtu.be/xcwCoxQcPT0))
   
 Capítulo 8 - Flujo de trabajo: proyectos
 
@@ -71,11 +71,11 @@ Capítulo 8 - Flujo de trabajo: proyectos
 ##### Manejar o domar datos
 Capítulo 9 - Introducción
 
-- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/009_transformar_datos.html) | VIDEO)
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/009_transformar_datos.html) | [Video](https://youtu.be/nbzX_fzu84k?t=690))
 
 Capítulo 10 - Tibbles
 
-- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/010_tibbles.html) | VIDEO)
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana08/Cohorte01/010_tibbles.html) | [Video](https://youtu.be/nbzX_fzu84k?t=979))
 
 Capítulo 11 - Importación de datos
 
