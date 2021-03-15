@@ -85,3 +85,5 @@ Capítulo 12 - Datos ordenados
 
 - Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana11/Cohorte01/012_datos_ordenados.html) | [Video](https://youtu.be/24fuHYagf9k))
 
+Capítulo 13 - Datos relacionales
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/Uot5PKTyRUY) | PARTE 2)
