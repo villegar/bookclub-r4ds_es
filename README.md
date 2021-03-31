@@ -18,16 +18,14 @@ Este repositorio tiene 3 directorios principales:
 
 ### Horario de Reuniones
 
-*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 4pm C(D)T* / 10pm GMT
+*Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 5pm C(D)T* / 11pm BST
 
-- 2021-03-16 - Capítulo 13 - Datos relacionales - Roberto Villegas-Diaz
+- 2021-04-06 - Capítulo 15 - Factores - Roberto Villegas-Diaz
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2021-03-23 y 2021-03-30 - Capítulo 14 - Cadenas de caracteres
-- 2021-04-06 - Capítulo 15 - Factores
-- 2021-04-06 - Capítulo 16 - Fechas y horas
+- 2021-04-13 - Capítulo 16 - Fechas y horas
 
 </details>
 <hr>
@@ -86,4 +84,7 @@ Capítulo 12 - Datos ordenados
 - Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana11/Cohorte01/012_datos_ordenados.html) | [Video](https://youtu.be/24fuHYagf9k))
 
 Capítulo 13 - Datos relacionales
-- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/Uot5PKTyRUY) | PARTE 2)
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/Uot5PKTyRUY) | [Parte 2](https://youtu.be/H10HTCvObLI))
+
+Capítulo 14 - Cadenas de caracteres
+- Cohorte 1: Luis Francisco Gómez López (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/k-zCaraJbUk) | [Parte 2](https://youtu.be/HYeX6bY3jnI))
