@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R para Ciencia de Datos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Roberto Villegas-Diaz (GH: villegar)" />
+    <meta name="date" content="2020-04-06" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R para Ciencia de Datos
+## Capítulo 15: Factores
+### Roberto Villegas-Diaz (GH: villegar)
+### 2020-04-06
+
+---
+
+
+
+
+
+## Contenidos
+
+* 15.1 Introducción
+
+* 15.2 Creando Factores
+
+* 15.3 Encuesta Social General
+
+* 15.4 Modificar el orden de los factores
+
+* 15.5 Modificar los niveles de los factores
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+
+```r
+if (!require(tidyverse))
+  install.packages("tidyverse")
+```
+
+```
+## Loading required package: tidyverse
+```
+
+```
+## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+```
+
+```
+## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
+## ✓ tibble  3.0.6     ✓ dplyr   1.0.4
+## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
+## ✓ readr   1.4.0     ✓ forcats 0.5.0
+```
+
+```
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+```
+
+```r
+if (!require(datos))
+  install.packages("datos")
+```
+
+```
+## Loading required package: datos
+```
+
+---
+
+## 15.1 Introducción
+
+Usados para trabajar con variables categóricas:
+
+- Conjunto finito y conocido de valores posibles
+
+--
+
+Cadenas de carácteres en orde no alfabético.
+
+.center[
+![:escala 50%](https://pics.me.me/lunes-martes-miercoles-jueves-viernes-20123301.png)
+]
+
+---
+
+## 15.2 Creando factores
+
+Supongamos que queremos trabajar con un vector de meses (abreviados):
+
+
+```r
+x1 &lt;- c("Dic", "Abr", "Ene", "Mar")
+```
+
+--
+
+&gt; ¿Pero cómo garantizamos que no hay valores inválidos?
+
+
+```r
+x2 &lt;- c("Dic", "Abr", "Eme", "Mar")
+```
+
+--
+
+&gt; Y si deseamos ordenar los meses, ¿cómo lo hacemos?
+
+
+```r
+sort(x1)
+```
+
+```
+## [1] "Abr" "Dic" "Ene" "Mar"
+```
+
+---
+
+## 15.2 Creando factores (2)
+
+Podemos solucionar estos problemas usando __factores__.
+
+--
+
+Primero, definimos los _niveles_ (valores válidos):
+
+
+```r
+niveles_meses &lt;- c(
+  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+)
+```
+
+--
+Ahora, creamos el factor:
+
+```r
+y1 &lt;- factor(x1, levels = niveles_meses)
+y1
+```
+
+```
+## [1] Dic Abr Ene Mar
+## Levels: Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic
+```
+
+```r
+sort(y1)
+```
+
+```
+## [1] Ene Mar Abr Dic
+## Levels: Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic
+```
+
+---
+
+## 15.2 Creando factores (3)
+
+Valores inválidos (no definidos en los niveles), son convertidos a `NA`:
+
+
+```r
+y2 &lt;- factor(x2, levels = niveles_meses)
+y2
+```
+
+```
+## [1] Dic  Abr  &lt;NA&gt; Mar 
+## Levels: Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic
+```
+
+--
+
+&gt; R no te dará ninguna advertencia sobre valores que son convertidos a `NA`.
+
+--
+
+Para prevenir este compartamiento, usa `readr::parse_factor()`:
+
+
+```r
+y2 &lt;- parse_factor(x2, levels = niveles_meses)
+```
+
+```
+## Warning: 1 parsing failure.
+## row col           expected actual
+##   3  -- value in level set    Eme
+```
+
+---
+
+## 15.2 Creando factores (4)
+Para acceder los nivels válidos:
+
+
+```r
+levels(y1)
+```
+
+```
+##  [1] "Ene" "Feb" "Mar" "Abr" "May" "Jun" "Jul" "Ago" "Sep" "Oct" "Nov" "Dic"
+```
+
+---
+
+## 15.3 Encuesta Social General
+
+&gt; Para más detalles: `?datos::encuesta`
+
+Para ver los niveles en un _tibble_ tienes que usar alguna función como `count`:
+
+
+```r
+encuesta %&gt;%
+  count(raza,
+        .drop = FALSE)
+```
+
+```
+## # A tibble: 4 x 2
+##   raza          n
+## * &lt;fct&gt;     &lt;int&gt;
+## 1 Otra       1959
+## 2 Negra      3129
+## 3 Blanca    16395
+## 4 No aplica     0
+```
+
+---
+
+## 15.3 Encuesta Social General (2)
+
+Alternativamente, usando un gráfico de barras:
+
+
+```r
+ggplot(encuesta, aes(raza)) +
+  geom_bar() +
+  scale_x_discrete(drop = FALSE)
+```
+
+![](Capitulo15_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+---
+
+### 15.3.1 Ejercicios
+
+1. Explora la distribución de `ingreso.` ¿Qué hace que el gráfico de barras por defecto sea tan difícil de comprender? ¿Cómo podrías mejorarlo?
+
+2. ¿Cuál es la `religion` más común en esta `encuesta`? ¿Cuál es el `partido` más común?
+
+3. ¿A qué `religion` se aplica cada `denominacion`? ¿Cómo puedes descubrirlo con una tabla? ¿Cómo lo puedes descubrir con una visualización?
+
+---
+
+## 15.4 Modificar el orden de los factores
+
+
+```r
+resumen_religion &lt;- encuesta %&gt;%
+  group_by(religion) %&gt;%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  )
+
+ggplot(resumen_religion, aes(horas_tv, fct_reorder(religion, horas_tv))) +
+  geom_point()
+```
+
+![](Capitulo15_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+## 15.4 Modificar el orden de los factores (2)
+
+Alternativamente:
+
+
+```r
+resumen_religion %&gt;%
+  mutate(religion = fct_reorder(religion, horas_tv)) %&gt;%
+  ggplot(aes(horas_tv, religion)) +
+  geom_point()
+```
+
+---
+
+## 15.4 Modificar el orden de los factores (3)
+
+
+```r
+resumen_ingreso &lt;- encuesta %&gt;%
+  group_by(ingreso) %&gt;%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  )
+
+ggplot(resumen_ingreso, aes(edad, fct_reorder(ingreso, edad))) + geom_point()
+```
+
+![](Capitulo15_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+
+---
+
+## 15.4 Modificar el orden de los factores (4)
+
+
+```r
+ggplot(resumen_ingreso, aes(edad, fct_relevel(ingreso, "No aplica"))) +
+  geom_point()
+```
+
+![](Capitulo15_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+
+---
+
+## 15.4 Modificar el orden de los factores (5)
+
+
+```r
+encuesta %&gt;%
+  mutate(estado_civil = estado_civil %&gt;% 
+           fct_infreq() %&gt;% 
+           fct_rev()) %&gt;%
+  ggplot(aes(estado_civil)) +
+  geom_bar()
+```
+
+![](Capitulo15_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+
+---
+
+### 15.4.1 Ejercicios
+
+1. Hay algunos números sospechosamente grandes en `horas_tv`. ¿Es la media un buen resumen?
+
+2. Identifica para cada factor en encuesta si el orden de los niveles es arbitrario o responde a algún principio.
+
+3. ¿Por qué mover “No aplica” al inicio de los niveles lo llevó al final del gráfico?
+
+
+---
+
+## 15.5 Modificar los niveles de los factores
+
+Algunas veces los niveles de un factor no son muy significativos, particularmente cuando deseamos compartir información.
+
+
+```r
+encuesta %&gt;% 
+  count(partido)
+```
+
+```
+## # A tibble: 10 x 2
+##    partido                        n
+##  * &lt;fct&gt;                      &lt;int&gt;
+##  1 Sin respuesta                154
+##  2 No sabe                        1
+##  3 Otro partido                 393
+##  4 Fuertemente republicano     2314
+##  5 No fuertemente republicano  3032
+##  6 Ind, pro rep                1791
+##  7 Independiente               4119
+##  8 Ind, pro dem                2499
+##  9 No fuertemente demócrata    3690
+## 10 Fuertemente demócrata       3490
+```
+
+---
+
+## 15.5 Modificar los niveles de los factores (2)
+
+
+```r
+encuesta %&gt;%
+  mutate(partido = fct_recode(partido,
+    "Republicano duro" = "Fuertemente republicano",
+    "Republicano moderado" = "No fuertemente republicano",
+    "Independiente pro republicano" = "Ind, pro rep",
+    "Independiente pro demócrata" = "Ind, pro dem",
+    "Demócrata moderado" = "No fuertemente demócrata",
+    "Demócrata duro" = "Fuertemente demócrata",
+    "Otro" = "Sin respuesta",
+    "Otro" = "No sabe",
+    "Otro" = "Otro partido"
+  )) %&gt;%
+  count(partido)
+```
+
+```
+## # A tibble: 8 x 2
+##   partido                           n
+## * &lt;fct&gt;                         &lt;int&gt;
+## 1 Otro                            548
+## 2 Republicano duro               2314
+## 3 Republicano moderado           3032
+## 4 Independiente pro republicano  1791
+## 5 Independiente                  4119
+## 6 Independiente pro demócrata    2499
+## 7 Demócrata moderado             3690
+## 8 Demócrata duro                 3490
+```
+
+---
+
+### 15.5.1 Ejercicios
+
+1. ¿Cómo han cambiado en el tiempo las proporciones de personas que se identifican como demócratas, republicanas e independientes?
+
+2. ¿Cómo podrías colapsar ingreso en un grupo más pequeño de categorías?
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+<style>
+.logo {
+  background-image: url(https://es.r4ds.hadley.nz/hex_r4ds-es.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  width: 110px;
+  height: 128px;
+  z-index: 0;
+}
+</style>
+
+<script>
+document
+  .querySelectorAll(
+    '.remark-slide-content' +
+    ':not(.title-slide)' +
+    // add additional classes to exclude here, e.g.
+    ':not(.inverse)' +
+    ':not(.hide-logo)'
+  )
+  .forEach(el => {
+    el.innerHTML += '<div class="logo"></div>';
+  });
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

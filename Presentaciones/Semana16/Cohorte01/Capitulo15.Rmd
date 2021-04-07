@@ -1,0 +1,308 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 15: Factores"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2020-04-06
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+
+## Contenidos
+
+* 15.1 Introducción
+
+* 15.2 Creando Factores
+
+* 15.3 Encuesta Social General
+
+* 15.4 Modificar el orden de los factores
+
+* 15.5 Modificar los niveles de los factores
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r}
+if (!require(tidyverse))
+  install.packages("tidyverse")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## 15.1 Introducción
+
+Usados para trabajar con variables categóricas:
+
+- Conjunto finito y conocido de valores posibles
+
+--
+
+Cadenas de carácteres en orden no alfabético.
+
+.center[
+![:escala 50%](https://pics.me.me/lunes-martes-miercoles-jueves-viernes-20123301.png)
+]
+
+---
+
+## 15.2 Creando factores
+
+Supongamos que queremos trabajar con un vector de meses (abreviados):
+
+```{r}
+x1 <- c("Dic", "Abr", "Ene", "Mar")
+```
+
+--
+
+> ¿Pero cómo garantizamos que no hay valores inválidos?
+
+```{r}
+x2 <- c("Dic", "Abr", "Eme", "Mar")
+```
+
+--
+
+> Y si deseamos ordenar los meses, ¿cómo lo hacemos?
+
+```{r}
+sort(x1)
+```
+
+---
+
+## 15.2 Creando factores (2)
+
+Podemos solucionar estos problemas usando __factores__.
+
+--
+
+Primero, definimos los _niveles_ (valores válidos):
+
+```{r}
+niveles_meses <- c(
+  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+)
+```
+
+--
+Ahora, creamos el factor:
+```{r}
+y1 <- factor(x1, levels = niveles_meses)
+y1
+sort(y1)
+```
+
+---
+
+## 15.2 Creando factores (3)
+
+Valores inválidos (no definidos en los niveles), son convertidos a `NA`:
+
+```{r}
+y2 <- factor(x2, levels = niveles_meses)
+y2
+```
+
+--
+
+> R no te dará ninguna advertencia sobre valores que son convertidos a `NA`.
+
+--
+
+Para prevenir este compartamiento, usa `readr::parse_factor()`:
+
+```{r}
+y2 <- parse_factor(x2, levels = niveles_meses)
+```
+
+---
+
+## 15.2 Creando factores (4)
+Para acceder los nivels válidos:
+
+```{r}
+levels(y1)
+```
+
+---
+
+## 15.3 Encuesta Social General
+
+> Para más detalles: `?datos::encuesta`
+
+Para ver los niveles en un _tibble_ tienes que usar alguna función como `count`:
+
+```{r}
+encuesta %>%
+  count(raza,
+        .drop = FALSE)
+```
+
+---
+
+## 15.3 Encuesta Social General (2)
+
+Alternativamente, usando un gráfico de barras:
+
+```{r, fig.height = 3, dpi = 300}
+ggplot(encuesta, aes(raza)) +
+  geom_bar() +
+  scale_x_discrete(drop = FALSE)
+```
+
+---
+
+### 15.3.1 Ejercicios
+
+1. Explora la distribución de `ingreso.` ¿Qué hace que el gráfico de barras por defecto sea tan difícil de comprender? ¿Cómo podrías mejorarlo?
+
+2. ¿Cuál es la `religion` más común en esta `encuesta`? ¿Cuál es el `partido` más común?
+
+3. ¿A qué `religion` se aplica cada `denominacion`? ¿Cómo puedes descubrirlo con una tabla? ¿Cómo lo puedes descubrir con una visualización?
+
+---
+
+## 15.4 Modificar el orden de los factores
+
+```{r, fig.height = 2.5, dpi = 300}
+resumen_religion <- encuesta %>%
+  group_by(religion) %>%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  )
+
+ggplot(resumen_religion, aes(horas_tv, fct_reorder(religion, horas_tv))) +
+  geom_point()
+```
+
+---
+
+## 15.4 Modificar el orden de los factores (2)
+
+Alternativamente:
+
+```{r, eval = FALSE}
+resumen_religion %>%
+  mutate(religion = fct_reorder(religion, horas_tv)) %>%
+  ggplot(aes(horas_tv, religion)) +
+  geom_point()
+```
+
+---
+
+## 15.4 Modificar el orden de los factores (3)
+
+```{r, fig.height = 2.5, dpi = 300}
+resumen_ingreso <- encuesta %>%
+  group_by(ingreso) %>%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  )
+
+ggplot(resumen_ingreso, aes(edad, fct_reorder(ingreso, edad))) + geom_point()
+```
+
+---
+
+## 15.4 Modificar el orden de los factores (4)
+
+```{r, fig.height = 3.5, dpi = 300}
+ggplot(resumen_ingreso, aes(edad, fct_relevel(ingreso, "No aplica"))) +
+  geom_point()
+```
+
+---
+
+## 15.4 Modificar el orden de los factores (5)
+
+```{r, fig.height = 3, dpi = 300}
+encuesta %>%
+  mutate(estado_civil = estado_civil %>% 
+           fct_infreq() %>% 
+           fct_rev()) %>%
+  ggplot(aes(estado_civil)) +
+  geom_bar()
+```
+
+---
+
+### 15.4.1 Ejercicios
+
+1. Hay algunos números sospechosamente grandes en `horas_tv`. ¿Es la media un buen resumen?
+
+2. Identifica para cada factor en encuesta si el orden de los niveles es arbitrario o responde a algún principio.
+
+3. ¿Por qué mover “No aplica” al inicio de los niveles lo llevó al final del gráfico?
+
+
+---
+
+## 15.5 Modificar los niveles de los factores
+
+Algunas veces los niveles de un factor no son muy significativos, particularmente cuando deseamos compartir información.
+
+```{r}
+encuesta %>% 
+  count(partido)
+```
+
+---
+
+## 15.5 Modificar los niveles de los factores (2)
+
+```{r}
+encuesta %>%
+  mutate(partido = fct_recode(partido,
+    "Republicano duro" = "Fuertemente republicano",
+    "Republicano moderado" = "No fuertemente republicano",
+    "Independiente pro republicano" = "Ind, pro rep",
+    "Independiente pro demócrata" = "Ind, pro dem",
+    "Demócrata moderado" = "No fuertemente demócrata",
+    "Demócrata duro" = "Fuertemente demócrata",
+    "Otro" = "Sin respuesta",
+    "Otro" = "No sabe",
+    "Otro" = "Otro partido"
+  )) %>%
+  count(partido)
+```
+
+---
+
+### 15.5.1 Ejercicios
+
+1. ¿Cómo han cambiado en el tiempo las proporciones de personas que se identifican como demócratas, republicanas e independientes?
+
+2. ¿Cómo podrías colapsar ingreso en un grupo más pequeño de categorías?
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?

@@ -1,0 +1,154 @@
+---
+title: "Capítulo 15: Factores"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(datos)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 15.3.1
+
+1. Explora la distribución de `ingreso`. ¿Qué hace que el gráfico de barras por defecto sea tan difícil de comprender? ¿Cómo podrías mejorarlo?
+
+R/ Dado que hay muchos niveles, es un poco difícil leer las etiquetas, una solución muy rápida (previamente discutida) es rotar los ejes.
+```{r 15-3-1-1, exercise=TRUE}
+encuesta %>%
+  count(ingreso,
+        .drop = FALSE)
+
+ggplot(encuesta, aes(ingreso)) +
+  geom_bar() +
+  scale_x_discrete(drop = FALSE)
+
+ggplot(encuesta, aes(ingreso)) +
+  geom_bar() +
+  scale_x_discrete(drop = FALSE) +
+  coord_flip()
+```
+
+
+2. ¿Cuál es la `religion` más común en esta encuesta? ¿Cuál es el `partido` más común?
+
+```{r 15-3-1-2, exercise=TRUE}
+encuesta %>%
+  count(religion,
+        .drop = FALSE,
+        sort = TRUE)
+
+encuesta %>%
+  count(partido,
+        .drop = FALSE,
+        sort = TRUE)
+```
+
+3. ¿A qué `religion` se aplica cada `denominacion`? ¿Cómo puedes descubrirlo con una tabla? ¿Cómo lo puedes descubrir con una visualización?
+
+```{r 15-3-1-3, exercise=TRUE}
+encuesta %>%
+  select(religion, denominacion) %>%
+  table()
+
+encuesta %>%
+  count(religion, denominacion) %>%
+  ggplot(aes(religion, denominacion, fill = n)) +
+  geom_tile() +
+  geom_text(aes(label = n), size = 2) +
+  viridis::scale_fill_viridis() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## 15.4.1
+
+1. Hay algunos números sospechosamente grandes en `horas_tv`. ¿Es la media un buen resumen?
+
+```{r 15-4-1-1, exercise=TRUE}
+encuesta %>%
+  count(horas_tv,
+        .drop = FALSE)
+
+encuesta %>%
+  ggplot(aes(x = horas_tv)) +
+  geom_histogram(binwidth = 1) +
+  scale_x_continuous(breaks = scales::pretty_breaks(24))
+```
+
+2. Identifica para cada factor en encuesta si el orden de los niveles es arbitrario o responde a algún principio.
+
+```{r 15-4-1-2, exercise=TRUE}
+purrr::map(encuesta, 
+           levels)
+```
+
+3. ¿Por qué mover “No aplica” al inicio de los niveles lo llevó al final del gráfico?
+
+R/ Para contestar esta pregunta, tenemos que pensar en cómo es que R representa un factor internamente, un vector de longitud finita con niveles válidos, _levels_. Y cada nuevo record del factor es un indice a la posición de cada nivel y no la cadena de caracteres en si. Es por ello que cuando movemos "No aplica" al inicio, este toma el valor de 1, y en el gráfico es representado como el nivel más cercano a zero.
+
+```{r 15-4-1-3, exercise=TRUE}
+resumen_ingreso <- encuesta %>%
+  group_by(ingreso) %>%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  )
+
+resumen_ingreso %>%
+  mutate(ingreso = fct_relevel(ingreso, "No aplica")) %>%
+  ggplot(aes(edad, ingreso)) +
+  geom_point()
+
+resumen_ingreso %>%
+  mutate(ingreso = fct_relevel(ingreso, "No aplica")) %>%
+  select(ingreso) %>%
+  unclass()
+```
+
+## 15.5.1
+
+1. ¿Cómo han cambiado en el tiempo las proporciones de personas que se identifican como demócratas, republicanas e independientes?
+
+R/ Podemos usar la función `fct_collapse`, para agrupar partidos en estos tres grandes grupos.
+
+```{r 15-5-1-1, exercise=TRUE}
+levels(encuesta$partido)
+
+encuesta %>%
+  mutate(partido = fct_collapse(partido,
+                                otro = c("Sin respuesta", "No sabe", "Otro partido"),
+                                republicano = c("Fuertemente republicano", "No fuertemente republicano"),
+                                independiente = c("Ind, pro rep", "Independiente", "Ind, pro dem"),
+                                democrata = c("No fuertemente demócrata", "Fuertemente demócrata"))) %>%
+  count(anio, partido) %>%
+  group_by(anio) %>%
+  mutate(proporcion = n / sum(n)) %>%
+  ggplot(aes(anio, proporcion, colour = fct_reorder2(partido, anio, proporcion))) +
+  geom_point() +
+  geom_line() +
+  scale_colour_brewer(name = "Partido", palette = "Set1")
+```
+
+2. ¿Cómo podrías colapsar ingreso en un grupo más pequeño de categorías?
+
+R/ Podríamos empezar colapsando categorías para las que no se obtuvo un valor estimado.
+
+```{r 15-5-1-2, exercise=TRUE}
+levels(encuesta$ingreso)
+
+encuesta %>%
+  mutate(ingreso = fct_collapse(ingreso,
+                                Otro = c("Sin respuesta", "No sabe", "Se niega a responder", "No aplica"),
+                                `Menos de 10000` = c("Menos de 1000", "1000 - 2999", "3000 - 3999", "4000 - 4999", "5000 - 5999", "6000 - 6999", "7000 - 7999", "8000 - 9999"))) %>% 
+  group_by(ingreso) %>%
+  summarise(
+    edad = mean(edad, na.rm = TRUE),
+    horas_tv = mean(horas_tv, na.rm = TRUE),
+    n = n()
+  ) %>%
+  ggplot(aes(edad, fct_relevel(ingreso, "Otro"))) +
+  geom_point()
+```
