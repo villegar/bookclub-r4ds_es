@@ -20,12 +20,16 @@ Este repositorio tiene 3 directorios principales:
 
 *Cohorte 1 - (comenzó el 2020-12-22) - Todos los Martes, 5pm C(D)T* / 11pm BST
 
-- 2021-04-06 - Capítulo 15 - Factores - Roberto Villegas-Diaz
+- 2021-04-13 - Capítulo 16 - Fechas y horas - Luis Francisco Gómez López
 
 <details>
   <summary> Reuniones futuras </summary>
   
-- 2021-04-13 - Capítulo 16 - Fechas y horas
+- 2021-04-20 - Capítulo 17 - Introducción (Programar)
+- 2021-04-20 - Capítulo 18 - Pipes
+- 2021-04-27 - Capítulo 19 - Funciones
+- 2021-05-04 - Capítulo 20 - Vectores
+- 2021-05-11 - Capítulo 21 - Iteración
 
 </details>
 <hr>
@@ -87,4 +91,7 @@ Capítulo 13 - Datos relacionales
 - Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/Uot5PKTyRUY) | [Parte 2](https://youtu.be/H10HTCvObLI))
 
 Capítulo 14 - Cadenas de caracteres
-- Cohorte 1: Luis Francisco Gómez López (DIAPOSITIVAS) | Videos: [Parte 1](https://youtu.be/k-zCaraJbUk) | [Parte 2](https://youtu.be/HYeX6bY3jnI))
+- Cohorte 1: Luis Francisco Gómez López ([Diapositivas](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana14-15/Cohorte01/14_cadenas_caracteres.html) / [Ejercicios](https://r4ds.github.io/bookclub-r4ds_es/Presentaciones/Semana14-15/Cohorte01/014_ejercicios.R) | Videos: [Parte 1](https://youtu.be/k-zCaraJbUk) | [Parte 2](https://youtu.be/HYeX6bY3jnI))
+
+Capítulo 15 - Factores
+- Cohorte 1: [Roberto Villegas-Diaz](https://github.com/villegar) (DIAPOSITIVAS | [Video](https://www.youtube.com/watch?v=R-q6TfQO2LY))
