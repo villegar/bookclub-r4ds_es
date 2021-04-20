@@ -200,6 +200,33 @@ mi_pipe(foo_foo)
 
 - Tus flujos tienen una estructura de dependencia compleja.
 
+--
+
+- Con funciones de evaluación perezosa, como `stop`:
+
+
+```r
+stop_no_perezoso &lt;- function() {
+  cat("Ayuda!!!")
+}
+
+stop_no_perezoso() %&gt;%
+  tryCatch(error = function(e) "Un error")
+```
+
+```
+## Ayuda!!!
+```
+
+```r
+stop("!") %&gt;%
+  tryCatch(error = function(e) "Un error")
+```
+
+```
+## [1] "Un error"
+```
+
 ---
 
 ## 18.4 Otras herramientas de magrittr
@@ -215,7 +242,7 @@ rnorm(100) %&gt;%
   str()
 ```
 
-![](Capitulos17-18_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+![](Capitulos17-18_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 
 ```
 ##  NULL
@@ -231,10 +258,10 @@ rnorm(100) %&gt;%
   str()
 ```
 
-![](Capitulos17-18_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+![](Capitulos17-18_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
 
 ```
-##  num [1:50, 1:2] -0.886 0.417 0.834 -0.114 0.324 ...
+##  num [1:50, 1:2] -0.872 -0.471 2.335 -0.455 1.491 ...
 ```
 ]
 
@@ -279,7 +306,7 @@ mtautos %&lt;&gt;% transform(cilindros = cilindros * 2)
 
 
 
-&gt; ¿Cómo podríamos encontrar el número de millas promedio por galón promedio, para cada grupo de cilindros? Usando el set de datos `mtautos`:
+&gt; ¿Cómo podríamos encontrar el número de millas por galón promedio, para cada grupo de cilindros? Usando el set de datos `mtautos`:
 
 ##### Opción 1: resultados intermedios
 

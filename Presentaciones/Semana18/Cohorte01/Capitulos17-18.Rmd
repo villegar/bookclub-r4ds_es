@@ -184,6 +184,22 @@ mi_pipe(foo_foo)
 
 - Tus flujos tienen una estructura de dependencia compleja.
 
+--
+
+- Con funciones de evaluación perezosa, como `stop`:
+
+```{r}
+stop_no_perezoso <- function() {
+  cat("Ayuda!!!")
+}
+
+stop_no_perezoso() %>%
+  tryCatch(error = function(e) "Un error")
+
+stop("!") %>%
+  tryCatch(error = function(e) "Un error")
+```
+
 ---
 
 ## 18.4 Otras herramientas de magrittr
@@ -245,7 +261,7 @@ library(tidyverse)
 library(datos)
 ```
 
-> ¿Cómo podríamos encontrar el número de millas promedio por galón promedio, para cada grupo de cilindros? Usando el set de datos `mtautos`:
+> ¿Cómo podríamos encontrar el número de millas por galón promedio, para cada grupo de cilindros? Usando el set de datos `mtautos`:
 
 ##### Opción 1: resultados intermedios
 ```{r}
