@@ -1,0 +1,285 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulos 17-18: Introducción & Pipes"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2020-04-20
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+
+## Contenidos
+
+* 17.1 Introducción
+
+* 18.2 Alternativas a los pipes
+
+* 18.3 Cuándo no usar el pipe
+
+* 18.4 Otras herramientas de magrittr
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este capítulo, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r}
+if (!require(magrittr))
+  install.packages("magrittr")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## 17.1 Introducción
+
+.center[
+![:escala 90%](https://es.r4ds.hadley.nz/diagrams_w_text_as_path/es/data-science-program.svg)
+]
+
+- Es importante pensar el código como un medio de comunicación.
+- Aprender más sobre programación es una inversión a largo plazo.
+
+---
+class: center, inverse, middle
+
+# Capítulo 18: Pipes
+
+---
+
+## 18.2 Alternativas a los pipes
+
+> El objetivo de un pipe es ayudarte a escribir código de una manera que sea más fácil de leer y entender.
+
+--
+
+Antes de programar, veamos un ejemplo de motivación:
+
+> El pequeño conejito Foo Foo Fue saltando por el bosque Recogiendo ratones del campo Y golpeándolos en la cabeza.
+
+--
+
+Podemos empezar por declarar un objeto que represente nuestro protagonista:
+
+```{r, eval = FALSE}
+foo_foo <- pequeño_conejito()
+```
+
+Usando este objeto y verbos para cada acción (por ejemplo __saltar__), podemos contar la misma historia en las siguientes formas:
+
+1. Guardar cada paso intermedio como un nuevo objeto.
+2. Sobreescribir el objeto original muchas veces.
+3. Componer funciones.
+4. Usar un pipe.
+
+---
+
+### 18.2.1 Pasos intermedios
+
+```{r, eval = FALSE}
+foo_foo_1 <- saltar(foo_foo, a_traves = bosque)
+foo_foo_2 <- recoger(foo_foo_1, que = ratones_del_campo)
+foo_foo_3 <- golpear(foo_foo_2, en = cabeza)
+```
+
+--
+
+##### Problemas:
+
+1. El código está abarrotado con nombres poco importantes.
+
+2. Hay que incrementar cuidadosamente el sufijo en cada línea.
+
+---
+
+### 18.2.2 Sobrescribir el original
+
+```{r, eval = FALSE}
+foo_foo <- saltar(foo_foo, a_traves = bosque)
+foo_foo <- recoger(foo_foo, que = ratones_del_campo)
+foo_foo <- golpear(foo_foo, en = cabeza)
+```
+
+--
+
+##### Problemas:
+
+1. Depurar es doloroso.
+
+2. La repetición del objeto a medida que es transformado
+
+---
+
+### 18.2.3 Composición de funciones
+
+```{r, eval = FALSE}
+golpear(
+  recoger(
+    saltar(foo_foo, por_el = bosque),
+    que = raton_de_campo
+  ),
+  en = la_cabeza
+)
+```
+
+--
+
+##### Problemas:
+
+1. Este código es difícil de leer para un ser humano.
+
+---
+
+### 18.2.4 Uso de pipe
+
+```{r, eval = FALSE}
+foo_foo %>%
+  saltar(a_través = bosque) %>%
+  recoger(que = ratones_campo) %>%
+  golpear(en = cabeza)
+```
+
+--
+
+> El pipe trabaja realizando una “transformación léxica” ...
+
+--
+
+Internamente, `magrittr` transforma el código anterior en:
+
+```{r, eval = FALSE}
+mi_pipe <- function(.) {
+  . <- saltar(., a_traves = bosque)
+  . <- recoger(., que = ratones_campo)
+  golpear(., en = la_cabeza)
+}
+mi_pipe(foo_foo)
+```
+
+---
+
+## 18.3 Cuándo no usar el pipe
+
+- Tus pipes son más largos que (digamos) 10 pasos.
+
+- Tienes múltiples inputs y outputs.
+
+- Tus flujos tienen una estructura de dependencia compleja.
+
+---
+
+## 18.4 Otras herramientas de magrittr
+
+#### Devolver los contenidos de la izquierda, `%T>%`
+
+.pull-left[
+```{r, fig.height = 5}
+rnorm(100) %>%
+  matrix(ncol = 2) %>%
+  plot() %>%
+  str()
+```
+]
+
+.pull-right[
+````{r, fig.height = 5}
+rnorm(100) %>%
+  matrix(ncol = 2) %T>%
+  plot() %>%
+  str()
+```
+]
+
+---
+
+## 18.4 Otras herramientas de magrittr (2)
+
+#### Trabajar con funciones que no tienen una API basada en data frames, `%$%`
+
+```{r}
+mtautos %$%
+  cor(cilindrada, millas)
+```
+
+--
+
+#### Para asignaciones, `%<>%`
+
+.pull-left[
+```{r}
+mtautos <- mtautos %>%
+  transform(cilindros = cilindros * 2)
+```
+]
+
+.pull-right[
+```{r}
+mtautos %<>% transform(cilindros = cilindros * 2)
+```
+]
+
+---
+
+## Bonus
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(datos)
+```
+
+> ¿Cómo podríamos encontrar el número de millas promedio por galón promedio, para cada grupo de cilindros? Usando el set de datos `mtautos`:
+
+##### Opción 1: resultados intermedios
+```{r}
+resultado <- group_by(mtautos, cilindros)
+resultado <- summarise(resultado, avg_millas = mean(millas))
+resultado
+```
+
+---
+
+## Bonus (2)
+
+##### Opción 2: composición
+```{r}
+resultado <- summarise(
+  group_by(mtautos, cilindros), 
+  avg_millas = mean(millas)
+)
+resultado
+```
+
+---
+
+## Bonus (3)
+
+##### Opción 3: con el pipe
+```{r}
+resultado <- mtautos %>% 
+    group_by(cilindros) %>% 
+    summarise(avg_millas = mean(millas))
+resultado
+```
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?
