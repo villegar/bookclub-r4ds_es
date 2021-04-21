@@ -1,0 +1,434 @@
+---
+title: "Fechas y horas"
+subtitle: "R para ciencia de datos<br/>Club de lectura<br/>Capítulo 16"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-04-04 19:21:24 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo = TRUE, 
+                      fig.align  = 'center')
+```
+
+```{r libraries, include = FALSE, message = FALSE}
+library(xaringan)
+library(tidyverse)
+library(lubridate)
+library(datos)
+library(RefManageR)
+library(knitr)
+```
+
+```{r load_referecences, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style = "authoryear",
+  cite.style = "authoryear",
+  style = "markdown",
+  hyperlink = FALSE,
+  dashed = FALSE
+)
+
+my_bib <- RefManageR::ReadBib("./R_for_data_science.bib", check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(my_bib, "grolemund_r_2019")` Cap. 16** aprenderás a:
+
+--
+
+- Crear fechas (`<date>`) y fechas-horas (`<dttm>`)
+- Extraer y configurar los componentes individuales de las fechas-horas
+- Como funciona la aritmética con fechas y la forma como se representan los periodos de tiempo
+
+    + Duraciones
+    + Periodos 
+    + Intervalos
+    
+- Trabajar con husos horarios
+
+--
+
+Para manipular fechas y fechas-horas se utilizará el paquete [lubridate](https://lubridate.tidyverse.org/)<sup>1</sup>
+
+.footnote[
+[1] Ver la [cheat sheet](https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf) para una referencia rápida
+]
+
+---
+
+# Creando fechas y fechas-horas
+
+--
+
+**ISO 8601**: Estándar para evitar ambiguedades en la representación de fechas y horas
+
+- La representación se realiza de izquierda a derecha empezando con la unidad más grande y terminando con la unidad más pequeña<sup>2</sup>
+
+--
+
+- **Fecha**: YYYY-MM-DD<sup>3</sup>
+
+    + "Abril 5 de 2021" $\rightarrow$ "2021-04-05"
+    
+--
+
+- **Fecha-hora**: YYYY-MM-DDThh:mm:ss<sup>3</sup>
+
+    + "Abril 5 de 2021 a las 7 de la noche con 59 minutos y 38 segundos" $\rightarrow$ "2021-04-05T19:59:38"
+
+.footnote[
+[2] Se pueden utilizar otros separadores pero utilizaremos "-"
+
+[3] Más adelante agregaremos el tema de los husos horarios teniendo en cuenta que una fecha o una fecha-hora esta asociada con una posición geográfica 
+]
+
+---
+
+# Creando fechas y fechas-horas
+
+## A partir de una cadena de caracteres
+
+- Especificando el separador y utilizando el prefijo `%`
+
+```{r}
+fast_strptime(x = "2021/9/12", format = "%Y/%d/%m", #<< 
+              tz = "America/Bogota")
+```
+
+--
+
+- Sin especificar el separador ni el prefijo `%` donde se busca adivinar
+
+    + El argumento `orders` controla el formato en el que `y` se refiere al año, `m` a l mes y `d` al dia  
+
+```{r}
+parse_date_time(x = "21/9/Dic", orders = "ydm", #<< 
+                tz = "America/Bogota", locale = "es_ES.UTF-8")
+```
+
+---
+
+# Creando fechas y fechas-horas
+
+## Desde componentes individuales
+
+- Solo funciona con componentes numéricos ya que se basa en `base::ISOdate` y `base::ISOdatetime`  
+
+```{r}
+make_date(year = 2021, month = 12, day = 9)
+```
+
+```{r}
+make_datetime(year = 2021, month = 12, day = 9, 
+              hour = 4, min = 5, sec = 1, 
+              tz = "America/Bogota")
+```
+
+---
+
+# Creando fechas y fechas-horas
+
+## Desde otros tipos
+
+```{r}
+# Número de dias desde 1970-01-01 UTC
+## ymd("1970-01-01") + 18721
+as_date(x = 18721, origin = ymd("1970-01-01", tz = "UTC"))
+```
+
+```{r}
+# Número de segundos desde 1970-01-01T00:00:00 UTC
+## ymd("1970-01-01", tz = "UTC") + 1617575462
+as_datetime(x = 1617575462, origin = ymd("1970-01-01", tz = "UTC"), 
+            tz = "UTC")
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Obtener componentes
+
+`year()` (año), `month()` (mes), `mday()` (día del mes), `yday() (día del año)`, `wday()` (día de la semana), `hour()` (hora), `minute()` (minuto), y `second()` (segundo).
+
+```{r}
+fecha_hora_ejemplo <- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+year(x = fecha_hora_ejemplo)
+month(x = fecha_hora_ejemplo, label = TRUE)
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Obtener componentes
+
+```{r}
+yday(x = fecha_hora_ejemplo)
+mday(x = fecha_hora_ejemplo)
+wday(x = fecha_hora_ejemplo, 
+     label = TRUE, abbr = TRUE, 
+     week_start = 1)
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Redondeo
+
+`floor_date()` (fecha hacia abajo), `round_date()` (redondear fecha a la unidad más cercana) y `ceiling_date()` (fecha hacia arriba)
+
+```{r}
+fecha_hora_ejemplo <- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+floor_date(x = fecha_hora_ejemplo, unit = "2 days")
+ceiling_date(x = fecha_hora_ejemplo, unit = "2 days")
+round_date(x = fecha_hora_ejemplo, unit = "2 days")
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Modificación de componentes
+
+`update` permite modificar `year`, `month`, `yday`, `wday`, `mday`, `day`, `hour`, `minute`, `second`, `tz`
+
+```{r}
+fecha_hora_ejemplo <- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+update(object = fecha_hora_ejemplo, tz = "America/Costa_Rica")
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Modificación de componentes
+
+Los componentes que no se señalen no serán alterados y en el caso que no sean válidos este aspecto se controla con el argumento `roll`
+
+```{r}
+fecha_hora_ejemplo <- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+## No funciona: ¿Por qué?
+update(object = fecha_hora_ejemplo, 
+       month = 2, mday = 29, roll = FALSE)
+update(object = fecha_hora_ejemplo, 
+       month = 2, mday = 29, roll = TRUE)
+```
+
+---
+
+# Aritmética con fechas
+
+Dificultad inicial en la aritmética en las fechas debido a saltos o retrocesos si se piensa el tiempo como una línea continua
+
+--
+
+```{r}
+ymd_hms("2021-03-14 02:00:00", tz = "America/New_York")
+```
+
+```{r}
+(ymd_hms("2021-03-14 03:00:00", tz = "America/New_York") -
+ ymd_hms("2021-03-14 00:00:00", tz = "America/New_York"))
+```
+
+--
+
+```{r}
+(ymd_hms("2021-11-07 02:00:00", tz = "America/New_York") - 
+ ymd_hms("2021-11-07 00:00:00", tz = "America/New_York"))
+```
+
+---
+
+# Aritmética con fechas
+
+Para facilitar la aritmética con fechas se introducen 3 clases:
+
+- **Duraciones** (durations): representa un número exacto de segundos
+- **Períodos** (periods): representan unidades humanas como semanas o meses
+- **Intervalos** (intervals): representan un punto de inicio y uno de finalización
+
+---
+
+# Aritmética con fechas
+
+## Duraciones
+
+```{r}
+# Tiene en cuenta que existe un salto
+## [2021-03-14 02:00:00, 2021-03-14 03:00:00) 
+## en tz = "America/New_York" no existe
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ duration(num = 2, units = "hours"))
+```
+
+---
+
+# Aritmética con fechas
+
+## Periodos
+
+```{r}
+# Asume momentaneamente que no existe un salto
+## [2021-03-14 02:00:00, 2021-03-14 03:00:00) 
+## en tz = "America/New_York"
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ period(num = 2, units = "hours"))
+```
+
+```{r}
+# Sin embargo es consistente si no existe
+## una fecha
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ period(num = 1, units = "hours"))
+```
+
+---
+
+# Aritmética con fechas
+
+## Periodos
+
+Caso de la aritmética con meses
+
+```{r}
+# Aquí se aplica la consistencia
+ymd("2021-01-31") + period(num = 1, units = "months")
+```
+
+Solución con el operador `%m+%` o `%m-%`
+
+```{r}
+ymd("2021-01-31") %m+% period(num = 1, units = "months")
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Se pueden entender como una duración con un punto de partida y un punto de llegada
+
+### Opciones de creación
+
+```{r}
+interval(start = ymd("2021-01-01", tz = "America/Bogota"), 
+         end   = ymd("2021-12-31", tz = "America/Bogota"), 
+         tzone = "America/Bogota")
+
+(ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota")) 
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Verificar si una fecha o uno intervalo está dentro de otro intervalo
+
+```{r}
+intervalo_a <- ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota") 
+
+intervalo_b <- ymd("2020-06-01", tz = "America/Bogota") %--% 
+ ymd("2021-06-01", tz = "America/Bogota") 
+
+# intervalo_b no se encuentra dentro del intervalo_a
+intervalo_b %within% intervalo_a
+
+# Esta fecha se encuentra dentro del intervalo_b
+ymd("2021-01-01", tz = "America/Bogota") %within% intervalo_a
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Verificar si un intervalo se traslapa con otro intervalo
+
+```{r}
+intervalo_a <- ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota") 
+
+intervalo_b <- ymd("2020-06-01", tz = "America/Bogota") %--% 
+ ymd("2021-06-01", tz = "America/Bogota")
+
+int_overlaps(int1 = intervalo_a, intervalo_b)
+```
+
+---
+
+# Usos horarios
+
+Se refiere a la forma en que se divide la tierra por zonas para determinar por convención la hora que aplica en cada zona.
+
+```{r echo = FALSE, fig.height=7, fig.retina=3, fig.cap="Fuente imagen: https://commons.wikimedia.org/wiki/File:World_Time_Zones_Map.png"}
+
+include_graphics(path = "016_World_Time_Zones_Map.png")
+```
+
+---
+
+# Usos horarios
+
+Para conocer la zona horaria que se encuentra configurada por parte del sistema operativo
+
+```{r}
+Sys.timezone(location = TRUE)
+```
+
+Cambiar solo la zona horaria
+
+```{r}
+ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %>% 
+  force_tz(tzone = "America/Costa_Rica")
+```
+
+Convertir a otra zona horaria
+
+```{r}
+ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %>% 
+  with_tz(tzone = "America/Costa_Rica")
+```
+
+---
+
+# Usos horarios
+
+Diferencias entre fechas preservan la consistencia respecto al instante al que se refieren
+
+```{r}
+(ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %>% 
+  with_tz(tzone = "America/Costa_Rica") - 
+  ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota"))
+```
+
+---
+
+# Referencias
+
+```{r refs, echo=FALSE, results="asis"}
+RefManageR::PrintBibliography(my_bib)
+```

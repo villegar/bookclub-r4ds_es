@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Fechas y horas</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Luis Francisco Gomez Lopez" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Fechas y horas
+## R para ciencia de datos<br/>Club de lectura<br/>Capítulo 16
+### Luis Francisco Gomez Lopez
+### 2021-04-04 19:21:24 GMT -05:00
+
+---
+
+
+
+
+
+
+
+
+# ¿Qué aprenderás?
+
+En **Grolemund and Wickham (2019) Cap. 16** aprenderás a:
+
+--
+
+- Crear fechas (`&lt;date&gt;`) y fechas-horas (`&lt;dttm&gt;`)
+- Extraer y configurar los componentes individuales de las fechas-horas
+- Como funciona la aritmética con fechas y la forma como se representan los periodos de tiempo
+
+    + Duraciones
+    + Periodos 
+    + Intervalos
+    
+- Trabajar con husos horarios
+
+--
+
+Para manipular fechas y fechas-horas se utilizará el paquete [lubridate](https://lubridate.tidyverse.org/)&lt;sup&gt;1&lt;/sup&gt;
+
+.footnote[
+[1] Ver la [cheat sheet](https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf) para una referencia rápida
+]
+
+---
+
+# Creando fechas y fechas-horas
+
+--
+
+**ISO 8601**: Estándar para evitar ambiguedades en la representación de fechas y horas
+
+- La representación se realiza de izquierda a derecha empezando con la unidad más grande y terminando con la unidad más pequeña&lt;sup&gt;2&lt;/sup&gt;
+
+--
+
+- **Fecha**: YYYY-MM-DD&lt;sup&gt;3&lt;/sup&gt;
+
+    + "Abril 5 de 2021" `\(\rightarrow\)` "2021-04-05"
+    
+--
+
+- **Fecha-hora**: YYYY-MM-DDThh:mm:ss&lt;sup&gt;3&lt;/sup&gt;
+
+    + "Abril 5 de 2021 a las 7 de la noche con 59 minutos y 38 segundos" `\(\rightarrow\)` "2021-04-05T19:59:38"
+
+.footnote[
+[2] Se pueden utilizar otros separadores pero utilizaremos "-"
+
+[3] Más adelante agregaremos el tema de los husos horarios teniendo en cuenta que una fecha o una fecha-hora esta asociada con una posición geográfica 
+]
+
+---
+
+# Creando fechas y fechas-horas
+
+## A partir de una cadena de caracteres
+
+- Especificando el separador y utilizando el prefijo `%`
+
+
+```r
+*fast_strptime(x = "2021/9/12", format = "%Y/%d/%m",
+              tz = "America/Bogota")
+```
+
+```
+## [1] "2021-12-09 America/Bogota"
+```
+
+--
+
+- Sin especificar el separador ni el prefijo `%` donde se busca adivinar
+
+    + El argumento `orders` controla el formato en el que `y` se refiere al año, `m` a l mes y `d` al dia  
+
+
+```r
+*parse_date_time(x = "21/9/Dic", orders = "ydm",
+                tz = "America/Bogota", locale = "es_ES.UTF-8")
+```
+
+```
+## [1] "2021-12-09 -05"
+```
+
+---
+
+# Creando fechas y fechas-horas
+
+## Desde componentes individuales
+
+- Solo funciona con componentes numéricos ya que se basa en `base::ISOdate` y `base::ISOdatetime`  
+
+
+```r
+make_date(year = 2021, month = 12, day = 9)
+```
+
+```
+## [1] "2021-12-09"
+```
+
+
+```r
+make_datetime(year = 2021, month = 12, day = 9, 
+              hour = 4, min = 5, sec = 1, 
+              tz = "America/Bogota")
+```
+
+```
+## [1] "2021-12-09 04:05:01 -05"
+```
+
+---
+
+# Creando fechas y fechas-horas
+
+## Desde otros tipos
+
+
+```r
+# Número de dias desde 1970-01-01 UTC
+## ymd("1970-01-01") + 18721
+as_date(x = 18721, origin = ymd("1970-01-01", tz = "UTC"))
+```
+
+```
+## [1] "2021-04-04"
+```
+
+
+```r
+# Número de segundos desde 1970-01-01T00:00:00 UTC
+## ymd("1970-01-01", tz = "UTC") + 1617575462
+as_datetime(x = 1617575462, origin = ymd("1970-01-01", tz = "UTC"), 
+            tz = "UTC")
+```
+
+```
+## [1] "2021-04-04 22:31:02 UTC"
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Obtener componentes
+
+`year()` (año), `month()` (mes), `mday()` (día del mes), `yday() (día del año)`, `wday()` (día de la semana), `hour()` (hora), `minute()` (minuto), y `second()` (segundo).
+
+
+```r
+fecha_hora_ejemplo &lt;- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+year(x = fecha_hora_ejemplo)
+```
+
+```
+## [1] 2021
+```
+
+```r
+month(x = fecha_hora_ejemplo, label = TRUE)
+```
+
+```
+## [1] Apr
+## 12 Levels: Jan &lt; Feb &lt; Mar &lt; Apr &lt; May &lt; Jun &lt; Jul &lt; Aug &lt; Sep &lt; ... &lt; Dec
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Obtener componentes
+
+
+```r
+yday(x = fecha_hora_ejemplo)
+```
+
+```
+## [1] 95
+```
+
+```r
+mday(x = fecha_hora_ejemplo)
+```
+
+```
+## [1] 5
+```
+
+```r
+wday(x = fecha_hora_ejemplo, 
+     label = TRUE, abbr = TRUE, 
+     week_start = 1)
+```
+
+```
+## [1] Mon
+## Levels: Mon &lt; Tue &lt; Wed &lt; Thu &lt; Fri &lt; Sat &lt; Sun
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Redondeo
+
+`floor_date()` (fecha hacia abajo), `round_date()` (redondear fecha a la unidad más cercana) y `ceiling_date()` (fecha hacia arriba)
+
+
+```r
+fecha_hora_ejemplo &lt;- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+floor_date(x = fecha_hora_ejemplo, unit = "2 days")
+```
+
+```
+## [1] "2021-04-05 -05"
+```
+
+```r
+ceiling_date(x = fecha_hora_ejemplo, unit = "2 days")
+```
+
+```
+## [1] "2021-04-07 -05"
+```
+
+```r
+round_date(x = fecha_hora_ejemplo, unit = "2 days")
+```
+
+```
+## [1] "2021-04-05 -05"
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Modificación de componentes
+
+`update` permite modificar `year`, `month`, `yday`, `wday`, `mday`, `day`, `hour`, `minute`, `second`, `tz`
+
+
+```r
+fecha_hora_ejemplo &lt;- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+update(object = fecha_hora_ejemplo, tz = "America/Costa_Rica")
+```
+
+```
+## [1] "2021-04-05 15:10:32 CST"
+```
+
+---
+
+# Componentes de fecha-hora
+
+## Modificación de componentes
+
+Los componentes que no se señalen no serán alterados y en el caso que no sean válidos este aspecto se controla con el argumento `roll`
+
+
+```r
+fecha_hora_ejemplo &lt;- ymd_hms(x = "2021-04-05 15:10:32", 
+                              tz = "America/Bogota")
+## No funciona: ¿Por qué?
+update(object = fecha_hora_ejemplo, 
+       month = 2, mday = 29, roll = FALSE)
+```
+
+```
+## [1] "2021-03-01 15:10:32 -05"
+```
+
+```r
+update(object = fecha_hora_ejemplo, 
+       month = 2, mday = 29, roll = TRUE)
+```
+
+```
+## [1] "2021-03-01 15:10:32 -05"
+```
+
+---
+
+# Aritmética con fechas
+
+Dificultad inicial en la aritmética en las fechas debido a saltos o retrocesos si se piensa el tiempo como una línea continua
+
+--
+
+
+```r
+ymd_hms("2021-03-14 02:00:00", tz = "America/New_York")
+```
+
+```
+## Warning: 1 failed to parse.
+```
+
+```
+## [1] NA
+```
+
+
+```r
+(ymd_hms("2021-03-14 03:00:00", tz = "America/New_York") -
+ ymd_hms("2021-03-14 00:00:00", tz = "America/New_York"))
+```
+
+```
+## Time difference of 2 hours
+```
+
+--
+
+
+```r
+(ymd_hms("2021-11-07 02:00:00", tz = "America/New_York") - 
+ ymd_hms("2021-11-07 00:00:00", tz = "America/New_York"))
+```
+
+```
+## Time difference of 3 hours
+```
+
+---
+
+# Aritmética con fechas
+
+Para facilitar la aritmética con fechas se introducen 3 clases:
+
+- **Duraciones** (durations): representa un número exacto de segundos
+- **Períodos** (periods): representan unidades humanas como semanas o meses
+- **Intervalos** (intervals): representan un punto de inicio y uno de finalización
+
+---
+
+# Aritmética con fechas
+
+## Duraciones
+
+
+```r
+# Tiene en cuenta que existe un salto
+## [2021-03-14 02:00:00, 2021-03-14 03:00:00) 
+## en tz = "America/New_York" no existe
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ duration(num = 2, units = "hours"))
+```
+
+```
+## [1] "2021-03-14 04:00:00 EDT"
+```
+
+---
+
+# Aritmética con fechas
+
+## Periodos
+
+
+```r
+# Asume momentaneamente que no existe un salto
+## [2021-03-14 02:00:00, 2021-03-14 03:00:00) 
+## en tz = "America/New_York"
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ period(num = 2, units = "hours"))
+```
+
+```
+## [1] "2021-03-14 03:00:00 EDT"
+```
+
+
+```r
+# Sin embargo es consistente si no existe
+## una fecha
+(ymd_hms("2021-03-14 01:00:00", tz = "America/New_York") +
+ period(num = 1, units = "hours"))
+```
+
+```
+## [1] NA
+```
+
+---
+
+# Aritmética con fechas
+
+## Periodos
+
+Caso de la aritmética con meses
+
+
+```r
+# Aquí se aplica la consistencia
+ymd("2021-01-31") + period(num = 1, units = "months")
+```
+
+```
+## [1] NA
+```
+
+Solución con el operador `%m+%` o `%m-%`
+
+
+```r
+ymd("2021-01-31") %m+% period(num = 1, units = "months")
+```
+
+```
+## [1] "2021-02-28"
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Se pueden entender como una duración con un punto de partida y un punto de llegada
+
+### Opciones de creación
+
+
+```r
+interval(start = ymd("2021-01-01", tz = "America/Bogota"), 
+         end   = ymd("2021-12-31", tz = "America/Bogota"), 
+         tzone = "America/Bogota")
+```
+
+```
+## [1] 2021-01-01 -05--2021-12-31 -05
+```
+
+```r
+(ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota")) 
+```
+
+```
+## [1] 2021-01-01 -05--2021-12-31 -05
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Verificar si una fecha o uno intervalo está dentro de otro intervalo
+
+
+```r
+intervalo_a &lt;- ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota") 
+
+intervalo_b &lt;- ymd("2020-06-01", tz = "America/Bogota") %--% 
+ ymd("2021-06-01", tz = "America/Bogota") 
+
+# intervalo_b no se encuentra dentro del intervalo_a
+intervalo_b %within% intervalo_a
+```
+
+```
+## [1] FALSE
+```
+
+```r
+# Esta fecha se encuentra dentro del intervalo_b
+ymd("2021-01-01", tz = "America/Bogota") %within% intervalo_a
+```
+
+```
+## [1] TRUE
+```
+
+---
+
+# Aritmética con fechas
+
+## Intervalos
+
+Verificar si un intervalo se traslapa con otro intervalo
+
+
+```r
+intervalo_a &lt;- ymd("2021-01-01", tz = "America/Bogota") %--% 
+ ymd("2021-12-31", tz = "America/Bogota") 
+
+intervalo_b &lt;- ymd("2020-06-01", tz = "America/Bogota") %--% 
+ ymd("2021-06-01", tz = "America/Bogota")
+
+int_overlaps(int1 = intervalo_a, intervalo_b)
+```
+
+```
+## [1] TRUE
+```
+
+---
+
+# Usos horarios
+
+Se refiere a la forma en que se divide la tierra por zonas para determinar por convención la hora que aplica en cada zona.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="016_World_Time_Zones_Map.png" alt="Fuente imagen: https://commons.wikimedia.org/wiki/File:World_Time_Zones_Map.png" width="569" /&gt;
+&lt;p class="caption"&gt;Fuente imagen: https://commons.wikimedia.org/wiki/File:World_Time_Zones_Map.png&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Usos horarios
+
+Para conocer la zona horaria que se encuentra configurada por parte del sistema operativo
+
+
+```r
+Sys.timezone(location = TRUE)
+```
+
+```
+## [1] "America/Bogota"
+```
+
+Cambiar solo la zona horaria
+
+
+```r
+ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %&gt;% 
+  force_tz(tzone = "America/Costa_Rica")
+```
+
+```
+## [1] "2021-04-07 20:53:00 CST"
+```
+
+Convertir a otra zona horaria
+
+
+```r
+ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %&gt;% 
+  with_tz(tzone = "America/Costa_Rica")
+```
+
+```
+## [1] "2021-04-07 19:53:00 CST"
+```
+
+---
+
+# Usos horarios
+
+Diferencias entre fechas preservan la consistencia respecto al instante al que se refieren
+
+
+```r
+(ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota") %&gt;% 
+  with_tz(tzone = "America/Costa_Rica") - 
+  ymd_hms("2021-04-07 20:53:00", tz = "America/Bogota"))
+```
+
+```
+## Time difference of 0 secs
+```
+
+---
+
+# Referencias
+
+Grolemund, G. and H. Wickham (2019). _R para Ciencia de Datos_. URL:
+[http://es.r4ds.hadley.nz/](http://es.r4ds.hadley.nz/) (visited on Jan.
+06, 2021).
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
