@@ -23,6 +23,7 @@ xaringanthemer::style_mono_light(
   code_font_google   = xaringanthemer::google_font("Droid Mono")
 )
 library(tidyverse)
+set.seed(1)
 ```
 
 ## Contenidos
