@@ -172,7 +172,7 @@ tmp %>%
   purrr::set_names(c("foo", "bar", "baz"))
 
 # Comportamiento especial, sin necesidad de diferente notación
-purrr::set_names(nm = c("primero", "segundo"))
+purrr::set_names(c("primero", "segundo"))
 
 # La longitud de los nombres ES revisada
 purrr::set_names(1:4, c("a", "b"))
