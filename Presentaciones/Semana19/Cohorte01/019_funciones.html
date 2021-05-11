@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Funciones</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Luis Francisco Gomez Lopez" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Funciones
+## R para ciencia de datos<br>Club de lectura<br>Capítulo 19<br>
+### Luis Francisco Gomez Lopez
+### 2021-04-19 15:04:21 GMT -05:00
+
+---
+
+
+
+
+
+
+
+
+# ¿Qué aprenderás?
+
+En **Grolemund and Wickham (2019) Cap. 19** se abarcará:
+
+--
+
+- Consejos prácticos para escribir funciones
+- Consejos de estilo para escribir código
+
+--
+
+En **Grolemund and Wickham (2019) Cap. 19** el foco está en escribir funciones en base R
+
+---
+
+# ¿Cuándo escribir una función?
+
+- "Rule of thumb":
+
+    + Cuando se copia y pega un bloque de código más de dos veces
+    
+
+```r
+set.seed(1234)
+df &lt;- tibble::tibble(
+ a = rnorm(10),
+ b = rnorm(10),
+ c = rnorm(10)
+)
+```
+
+- Ejemplo: reescalar una variable en el intervalo `\([0, 1]\)` si `\(min &lt; max &lt; \infty\)` 
+
+
+```r
+df$a &lt;- (df$a - min(df$a, na.rm = TRUE)) /
+         (max(df$a, na.rm = TRUE) - min(df$a, na.rm = TRUE))
+# Aqui se aplica la "Rule of thumb"
+df$b &lt;- (df$b - min(df$b, na.rm = TRUE)) /
+         (max(df$b, na.rm = TRUE) - min(df$b, na.rm = TRUE))
+df$c &lt;- (df$c - min(df$c, na.rm = TRUE)) /
+         (max(df$c, na.rm = TRUE) - min(df$c, na.rm = TRUE))
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Verificamos que cambia cuando se copia y pega un bloque de código más de dos veces
+- Luego lo convertimos en una variable
+
+
+```r
+x &lt;- df$a
+df$a &lt;- (x - min(x, na.rm = TRUE)) /
+         (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+```
+
+- Verificamos si nuestro "snippet" funciona
+
+
+```r
+df$a
+```
+
+```
+##  [1] 0.3319492 0.7647291 1.0000000 0.0000000 0.8089534 0.8313814 0.5162933
+##  [8] 0.5244878 0.5192926 0.4243735
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Verificamos si podemos utilizar otras funciones para reducir el código y verificamos nuevamente nuestro "snipet"
+
+
+```r
+set.seed(1234)
+df &lt;- tibble::tibble(
+ a = rnorm(10),
+ b = rnorm(10),
+ c = rnorm(10)
+)
+x &lt;- df$a
+# Utilizar la función range para extraer el min y max
+rng &lt;- range(x, na.rm = TRUE, finite = TRUE)
+df$a &lt;- (x - rng[1]) /
+         (rng[2] - rng[1])
+df$a
+```
+
+```
+##  [1] 0.3319492 0.7647291 1.0000000 0.0000000 0.8089534 0.8313814 0.5162933
+##  [8] 0.5244878 0.5192926 0.4243735
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Creamos la función y ensayamos si funciona
+
+
+```r
+rescale01 &lt;- function(x) {
+  rng &lt;- range(x, na.rm = TRUE, finite = TRUE)
+  (x - rng[1]) /
+    (rng[2] - rng[1])
+}
+
+rescale01(x = c(1:10, Inf, NA, NaN))
+```
+
+```
+##  [1] 0.0000000 0.1111111 0.2222222 0.3333333 0.4444444 0.5555556 0.6666667
+##  [8] 0.7777778 0.8888889 1.0000000       Inf        NA       NaN
+```
+
+```r
+# Aquí identificamos problemas
+rescale01(x = rep.int(x = 1, times = 10))
+```
+
+```
+##  [1] NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+Para crear una función tenemos en cuenta los siguientes aspectos:
+
+- Elegimos un nombre adecuado para la función:
+
+    + Por ejemplo `rescale01` dado que rescalamos una variable entre el intervalo `\([0,1]\)`
+
+- Especificamos los inputs de la función 
+
+- Especificamos el cuerpo de la función
+
+
+```r
+name &lt;- function(variables) {
+  # Aquí va el cuerpo de la función 
+}
+```
+
+- Luego debemos verificar con diferentes casos si funciona
+
+    + Estos ensayos se pueden formalizar y automatizar donde este proceso se conoce como pruebas unitarias (unit testing)
+    
+---
+
+# Recomendaciones para nombrar una función
+
+Para nombrar una función se recomienda:
+
+--
+
+- Un nombre corto pero que evoque claramente lo que pretende hacer
+
+--
+
+- Se recomienda que sean verbos 
+
+    + Se puede utilizar un sustantivo pero debe ser bastante conocido: por ejemplo `mean` o `median`
+    
+--
+    
+- Utilizar el estilo de `snake_case` y si no se utiliza entonces utilizar otro estilo pero escoger solo uno para ser consistente
+
+--
+
+- Si la función hace parte de una familia de funciones utilizar un prefijo para indicar que estan conectadas
+
+--
+
+- Utilizar comentarios, `#`, para explicar el “porqué” del código.
+
+    + También es recomendable dividir el archivo que contiene el código en partes para que sea más fácil de leer
+
+---
+
+# Ejecución condicional
+
+## Snipet
+
+
+```r
+if (condición) {
+ # el código que se ejecuta cuando la condición es verdadera (TRUE)
+} else {
+ # el código que se ejecuta cuando la condición es falsa (FALSE)
+}
+```
+
+- La condición debe evaluar como TRUE o FALSE.
+- Si la condición es un vector con valores TRUE o FALSE solo se tendrá en cuenta el primer valor
+- No es recomendable utilizar en la condición `&amp;` o `|` donde es mejor utilizar `&amp;&amp;` o `||`
+
+    + Ver `` ?`if` `` para más información y tener en cuenta que `&amp;` o `|` se aplica de manera vectorizada 
+
+---
+
+# Ejecución condicional
+
+## Snipet
+
+En este caso se recomienda que las condiciones sean mutuamente excluyentes
+
+
+```r
+if (condición1) {
+ # haz aquello
+} else if (condición2) {
+ # haz otra cosa
+} else {
+ #
+}
+```
+
+---
+
+# Ejecución condicional
+
+Si las condiciones no son mutuamente excluyentes una opción es utilizar la función `base::switch` dentro de una función cuando se pueden enumerar las diferentes alternativas a través de una expresión
+
+
+```r
+arithmetic_operation &lt;- function(x, y, 
+                                 op = c("add", "sub", 
+                                        "mul", "div")) {
+  switch(op[1],
+    add = x + y,
+    sub = x - y,
+    mul = x*y,
+    div = x / y
+  )
+}
+
+arithmetic_operation(x = 5, y = 2)
+```
+
+```
+## [1] 7
+```
+
+```r
+arithmetic_operation(x = 5, y = 2, op = "sub")
+```
+
+```
+## [1] 3
+```
+
+---
+
+# Argumentos de funciones
+
+Conjuntos a los que generalmente pertenece el argumento de una función:
+
+--
+
+- Conjunto que provee los datos a computar
+- Conjunto que controla los detalles de la computación
+
+    + `log(x, base = exp(1))`
+        
+        + `x` provee los datos y `base` controla el computo 
+        
+    + `mean(x, trim = 0, na.rm = FALSE, ...)`
+    
+        + `x` provee los datos y `trim`, `na.rm`, `...` controlan el computo
+
+--
+
+Se recomienda en general que el conjunto que provee los datos se incluya primero que el conjunto que controla los detalles de la computación
+
+---
+
+# Argumentos de funciones
+
+## Elecciones de nombres
+
+- Se recomienda utilizar nombres largos y descriptivos
+- En caso de utilizar nombres cortos entonces estos deben ser comunes y bastante conocidos o usados típicamente en otras funciones
+
+    + `na.rm` para especificar si se remueven o no valores `NA`
+    
+---
+
+# Argumentos de funciones
+    
+## Chequeo de valores
+
+- Verificar que los inputs sean inválidos
+
+
+```r
+mean(1:10,  na.rm = "foo")
+```
+
+```
+## Error in if (na.rm) x &lt;- x[!is.na(x)]: argument is not interpretable as logical
+```
+
+```r
+mean("foo", na.rm = TRUE)
+```
+
+```
+## Warning in mean.default("foo", na.rm = TRUE): argument is not numeric or
+## logical: returning NA
+```
+
+```
+## [1] NA
+```
+
+```r
+# El mensaje en este caso surge de un if(c(TRUE, FALSE)) 
+# en mean.default
+mean(1:10, na.rm = c(TRUE, FALSE))
+```
+
+```
+## Warning in if (na.rm) x &lt;- x[!is.na(x)]: the condition has length &gt; 1 and only
+## the first element will be used
+```
+
+```
+## [1] 5.5
+```
+
+---
+
+# Argumentos de funciones
+    
+## Chequeo de valores
+
+Por ejemplo ver parte del código de `mean.default` a modo de ejemplo
+
+
+```r
+&gt; mean.default
+function (x, trim = 0, na.rm = FALSE, ...) 
+{
+*   if (!is.numeric(x) &amp;&amp; !is.complex(x) &amp;&amp; !is.logical(x)) {
+        warning("argument is not numeric or logical: returning NA")
+        return(NA_real_)
+    }
+```
+
+---
+
+# Argumentos de funciones
+    
+## Punto-punto-punto (…)
+
+El argumento `...` captura cualquier número de argumentos que no estén contemplados de otra forma.
+
+- Por ejemplo en `paste(..., sep = " ", collapse = NULL, recycle0 = FALSE)`
+
+
+```r
+# ... captura los argumentos "a", "b" y "c"
+paste("a", "b", "c", sep = ", ")
+```
+
+```
+## [1] "a, b, c"
+```
+
+Sin embargo tiene un costo
+
+
+```r
+sum(c(0,0,0),
+# ... captura TRUE dado que na.mr no es un argumento válido
+*    na.mr = TRUE)
+```
+
+```
+## [1] 1
+```
+
+---
+
+# Valores de retorno
+
+- ¿Devolver un valor antes hace que tu función sea más fácil de leer?
+- ¿Puedes hacer tu función apta para utilizarla con pipes (`%&gt;%`)?
+
+## Sentencias de retorno explícitas
+
+Revisar `` ?`function` `` donde se indica lo siguiente
+
+
+```r
+function( arglist ) expr
+return(value)
+```
+
+- La pregunta en el fondo es cuando utilizar `return` (Ver Wickham (2020) Sección 3.3). 
+
+    + Caso de estudio: valor absoluto
+    
+`$$|x| = \begin{cases}
+         x  &amp; \text{ si } x \geq 0 \\
+         -x &amp; \text{ si } x &lt; 0
+         \end{cases}$$`
+
+---
+
+# Valores de retorno
+
+## Sentencias de retorno explícitas
+
+.pull-left[
+
+```r
+abs &lt;- function(x) {
+  if (x &gt;= 0) {
+    x
+  } else {
+    -x
+  }
+}
+```
+]
+
+.pull-right[
+
+```r
+abs &lt;- function(x) {
+  if (x &gt;= 0) {
+    return(x)
+  } 
+  - x
+}
+```
+]
+
+.pull-left[
+
+```r
+abs &lt;- function(x) {
+  if (x &gt;= 0) {
+    y &lt;- x
+  } else {
+    y &lt;- -x
+  }
+  return(y)
+}
+```
+]
+---
+
+# Valores de retorno
+
+## Escribir funciones aptas para un pipe
+
+Funciones aptas para pipe:
+
+- **Transformaciones**: se ingresa un objeto como primer argumento y se retorna una versión modificada del mismo
+
+- **Efectos secundarios**: el objeto ingresado no es modificado, sino que la función realiza una acción sobre el objeto
+
+    + Las funciones de efectos secundarios deben retornar “invisiblemente” el primer argumento
+    
+        + Ver por ejemplo `print.factor` o `print.Date` donde en el código se incluye `invisible`
+
+---
+
+# Valores de retorno
+
+## Escribir funciones aptas para un pipe
+
+
+```r
+mostrar_faltantes &lt;- function(df) {
+ n &lt;- sum(is.na(df))
+ cat("Valores faltantes: ", n, "\n", sep = "")
+
+ invisible(df)
+}
+
+mostrar_faltantes(iris)
+```
+
+```
+## Valores faltantes: 0
+```
+
+```r
+# Se puede seguir utilizando el pipe
+mostrar_faltantes(iris) %&gt;% slice_head(n = 1)
+```
+
+```
+## Valores faltantes: 0
+```
+
+```
+##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1          5.1         3.5          1.4         0.2  setosa
+```
+
+---
+
+# Entorno
+
+El entorno de una función controla cómo R encuentra el valor asociado a un nombre
+
+
+```r
+y &lt;- 10
+add &lt;- function(x) {
+  x + y
+}
+add(5)
+```
+
+```
+## [1] 15
+```
+
+- `y` no está definido en el entorno de la función
+- Debido a lo anterior R busca la variable `y` en el entorno donde se definio la función
+
+    + `y` se conoce como una variable libre (free variable) dado que no esta definida en el entorno de la función
+    
+- R usa reglas llamadas de **ámbito léxico** (lexical scoping) para encontrar el valor asociado a un nombre.
+
+---
+
+# Entorno
+
+Otros ejemplos
+
+
+```r
+# mean se encuentra en el entorno global
+# donde no se refiere a la constante p en
+# base
+pi &lt;- 2
+f1 &lt;- function(x) { 
+  # w se encuentra en el entorno de f1
+  w &lt;- 3
+  (x + w)^pi }
+f2 &lt;- function(y) {
+  # z se encuentra en el entorno de f2
+  z &lt;- 3
+  f1(y + z) 
+  }
+f2(2)
+```
+
+```
+## [1] 64
+```
+
+---
+
+# References
+
+Grolemund, G. and H. Wickham (2019). _R para Ciencia de Datos_. URL:
+[http://es.r4ds.hadley.nz/](http://es.r4ds.hadley.nz/) (visited on Jan.
+06, 2021).
+
+Wickham, H. (2020). _The tidyverse style guide_. URL:
+[https://style.tidyverse.org/](https://style.tidyverse.org/) (visited
+on Jan. 12, 2021).
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
