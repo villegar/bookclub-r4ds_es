@@ -183,7 +183,7 @@ NA_character_ # caracter
 
 1. Describe la diferencia entre `is.finite(x)` y `!is.infinite(x)`.
 
-2. Lee el código fuente de `dplyr:: near()` (Pista: para ver el código fuente, escribe el nombre de la función sin `()`). ¿Funcionó?
+2. Lee el código fuente de `dplyr::near()` (Pista: para ver el código fuente, escribe el nombre de la función sin `()`). ¿Funcionó?
 
 3. Un vector de tipo lógico puede tomar 3 valores posibles. ¿Cuántos valores posibles puede tomar un vector de tipo entero? ¿Cuántos valores posibles puede tomar un vector de tipo doble? Usa google para investigar sobre esto.
 
@@ -510,9 +510,93 @@ Existen tres atributos muy importante:
 
 ## 20.7 Vectores aumentados
 
-.center[
-# (Hasta la siguiente semana)
-]
+> vectores con atributos adicionales, incluyendo la clase
+
+--
+
+##### Tipos
+
+* Factores
+* Fechas
+* Fechas-hora
+* Tibbles
+
+---
+
+## 20.7 Vectores aumentados (2)
+### 20.7.1 Factores
+
+> representan datos categóricos que pueden tomar un set fijo de valores posibles.
+
+```{r}
+x <- factor(c("ab", "cd", "ab"), levels = c("ab", "cd", "ef"))
+typeof(x)
+attributes(x)
+```
+
+---
+
+## 20.7 Vectores aumentados (3)
+### 20.7.2 Fechas y fechas-hora
+
+> número de días desde el 1° de enero de 1970.
+
+```{r}
+x <- as.Date("1971-01-01")
+unclass(x)
+
+typeof(x)
+attributes(x)
+```
+
+---
+
+## 20.7 Vectores aumentados (4)
+### 20.7.2 Fechas y fechas-hora (2)
+
+> número de segundos desde el 1° de enero de 1970.
+
+```{r}
+x <- lubridate::ymd_hm("1970-01-01 01:00")
+unclass(x)
+
+typeof(x)
+attributes(x)
+```
+
+---
+
+## 20.7 Vectores aumentados (5)
+### 20.7.2 Fechas y fechas-hora (3)
+
+```{r}
+y <- as.POSIXlt(x)
+typeof(y)
+attributes(y)
+```
+
+---
+
+## 20.7 Vectores aumentados (6)
+### 20.7.3 Tibbles
+
+> listas aumentadas: tienen las clases “tbl_df”, “tbl” y “data.frame”, y atributos `names` (para columna) y `row.names` (para fila)
+
+```{r}
+tb <- tibble::tibble(x = 1:5, y = 5:1)
+typeof(tb)
+attributes(tb)
+```
+
+---
+
+### 20.7.4 Ejercicios
+
+1. ¿Qué valor retorna `hms::hms(3600)`? ¿Cómo se imprime? ¿Cuál es la tipo primario sobre en el que se basa el vector aumentado? ¿Qué atributos utiliza?
+
+2. Intenta crear un tibble que tenga columnas con diferentes longitudes. ¿Qué es lo que ocurre?
+
+3. Teniendo en cuenta la definición anterior, ¿está bien tener una lista como columna en un tibble?
 
 ---
 
