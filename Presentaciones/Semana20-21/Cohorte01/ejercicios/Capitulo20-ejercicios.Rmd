@@ -47,8 +47,6 @@ dplyr::near(x = pi, y = 3.14, tol = 0.01)
 dplyr::near(x = pi, y = 3.14, tol = 0.001)
 ```
 
-
-
 3. Un vector de tipo lógico puede tomar 3 valores posibles. ¿Cuántos valores posibles puede tomar un vector de tipo entero? ¿Cuántos valores posibles puede tomar un vector de tipo doble? Usa google para investigar sobre esto.
 
 R/ R usa 32-bit para representar números enteros, $2^{32} - 1$ (1 bit es usado para el signo), adicionalmente `NA_integer_`
@@ -95,7 +93,6 @@ redondear(21.55, "unidad")
 redondear(21.45, "unidad")
 ```
 
-
 5. ¿Qué funciones del paquete __readr__ te permiten convertir una cadena de caracteres en un vector de tipo lógico, entero y doble?
 
 R/
@@ -105,16 +102,15 @@ readr::parse_integer
 readr::parse_double
 ```
 
-
 ## 20.4.6
 
 1. ¿Qué es lo que `mean(is.na(x))` te dice acerca del vector ‘x’? ¿Y qué es lo que te dice `sum(!is.finite(x))`?
 
 R/ `mean(is.na(x))` devuelve la proporciooo4ón de valores faltantes en `x`. Y `sum(!is.finite(x))`, el número de elementos no finitos.
+
 ```{r 20-4-6-1, exercise=TRUE}
 
 ```
-
 
 2. Lee detenidamente la documentación de `is.vector()`. ¿Qué es lo que esta función realmente testea? ¿Por qué la función `is.atomic()` no concuerda con la definición de vectores atómicos vista anteriormente?
 
@@ -140,7 +136,6 @@ x <- list(x = 1, y = 2)
 is.atomic(x)
 ```
 
-
 3. Compara y contrasta `setNames()` con `purrr::set_names()`.
 
 R/
@@ -159,7 +154,6 @@ setNames(nm = c("primero", "segundo"))
 # La longitud de los nombres no es revisada
 setNames(1:4, c("a", "b"))
 ```
-
 
 ```{r 20-4-6-3-1, exercise=TRUE}
 ?purrr::set_names
@@ -213,7 +207,6 @@ pares(x)
 todos_menos_ultimo(x)
 pares_sin_na(x)
 ```
-
 
 5. ¿Por qué `x[-which(x > 0)]` no es lo mismo que `x[x <= 0]`?
 
