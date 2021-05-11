@@ -1,0 +1,506 @@
+---
+title: "Funciones"
+subtitle: "R para ciencia de datos<br>Club de lectura<br>Capítulo 19<br>"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-04-19 15:04:21 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo      = TRUE, 
+                      fig.align = "center")
+```
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(datos)
+library(xaringan)
+library(RefManageR)
+library(magrittr)
+```
+
+```{r load_references, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style     = "authoryear",
+  cite.style    = "authoryear",
+  style         = "markdown",
+  hyperlink     = FALSE,
+  dashed        = FALSE
+)
+
+mybib <- RefManageR::ReadBib(file  = "./R_for_data_science.bib",
+                             check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(mybib, "grolemund_r_2019")` Cap. 19** se abarcará:
+
+--
+
+- Consejos prácticos para escribir funciones
+- Consejos de estilo para escribir código
+
+--
+
+En **`r Citet(mybib, "grolemund_r_2019")` Cap. 19** el foco está en escribir funciones en base R
+
+---
+
+# ¿Cuándo escribir una función?
+
+- "Rule of thumb":
+
+    + Cuando se copia y pega un bloque de código más de dos veces
+    
+```{r}
+set.seed(1234)
+df <- tibble::tibble(
+ a = rnorm(10),
+ b = rnorm(10),
+ c = rnorm(10)
+)
+```
+
+- Ejemplo: reescalar una variable en el intervalo $[0, 1]$ si $min < max < \infty$ 
+
+```{r}
+df$a <- (df$a - min(df$a, na.rm = TRUE)) /
+         (max(df$a, na.rm = TRUE) - min(df$a, na.rm = TRUE))
+# Aqui se aplica la "Rule of thumb"
+df$b <- (df$b - min(df$b, na.rm = TRUE)) /
+         (max(df$b, na.rm = TRUE) - min(df$b, na.rm = TRUE))
+df$c <- (df$c - min(df$c, na.rm = TRUE)) /
+         (max(df$c, na.rm = TRUE) - min(df$c, na.rm = TRUE))
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Verificamos que cambia cuando se copia y pega un bloque de código más de dos veces
+- Luego lo convertimos en una variable
+
+```{r}
+x <- df$a
+df$a <- (x - min(x, na.rm = TRUE)) /
+         (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+```
+
+- Verificamos si nuestro "snippet" funciona
+
+```{r}
+df$a
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Verificamos si podemos utilizar otras funciones para reducir el código y verificamos nuevamente nuestro "snipet"
+
+```{r}
+set.seed(1234)
+df <- tibble::tibble(
+ a = rnorm(10),
+ b = rnorm(10),
+ c = rnorm(10)
+)
+x <- df$a
+# Utilizar la función range para extraer el min y max
+rng <- range(x, na.rm = TRUE, finite = TRUE)
+df$a <- (x - rng[1]) /
+         (rng[2] - rng[1])
+df$a
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+- Creamos la función y ensayamos si funciona
+
+```{r}
+
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE, finite = TRUE)
+  (x - rng[1]) /
+    (rng[2] - rng[1])
+}
+
+rescale01(x = c(1:10, Inf, NA, NaN))
+# Aquí identificamos problemas
+rescale01(x = rep.int(x = 1, times = 10))
+```
+
+---
+
+# ¿Cuándo escribir una función?
+
+Para crear una función tenemos en cuenta los siguientes aspectos:
+
+- Elegimos un nombre adecuado para la función:
+
+    + Por ejemplo `rescale01` dado que rescalamos una variable entre el intervalo $[0,1]$
+
+- Especificamos los inputs de la función 
+
+- Especificamos el cuerpo de la función
+
+```{r eval=FALSE}
+
+name <- function(variables) {
+  # Aquí va el cuerpo de la función 
+}
+```
+
+- Luego debemos verificar con diferentes casos si funciona
+
+    + Estos ensayos se pueden formalizar y automatizar donde este proceso se conoce como pruebas unitarias (unit testing)
+    
+---
+
+# Recomendaciones para nombrar una función
+
+Para nombrar una función se recomienda:
+
+--
+
+- Un nombre corto pero que evoque claramente lo que pretende hacer
+
+--
+
+- Se recomienda que sean verbos 
+
+    + Se puede utilizar un sustantivo pero debe ser bastante conocido: por ejemplo `mean` o `median`
+    
+--
+    
+- Utilizar el estilo de `snake_case` y si no se utiliza entonces utilizar otro estilo pero escoger solo uno para ser consistente
+
+--
+
+- Si la función hace parte de una familia de funciones utilizar un prefijo para indicar que estan conectadas
+
+--
+
+- Utilizar comentarios, `#`, para explicar el “porqué” del código.
+
+    + También es recomendable dividir el archivo que contiene el código en partes para que sea más fácil de leer
+
+---
+
+# Ejecución condicional
+
+## Snipet
+
+```{r eval=FALSE}
+if (condición) {
+ # el código que se ejecuta cuando la condición es verdadera (TRUE)
+} else {
+ # el código que se ejecuta cuando la condición es falsa (FALSE)
+}
+```
+
+- La condición debe evaluar como TRUE o FALSE.
+- Si la condición es un vector con valores TRUE o FALSE solo se tendrá en cuenta el primer valor
+- No es recomendable utilizar en la condición `&` o `|` donde es mejor utilizar `&&` o `||`
+
+    + Ver `` ?`if` `` para más información y tener en cuenta que `&` o `|` se aplica de manera vectorizada 
+
+---
+
+# Ejecución condicional
+
+## Snipet
+
+En este caso se recomienda que las condiciones sean mutuamente excluyentes
+
+```{r eval=FALSE}
+if (condición1) {
+ # haz aquello
+} else if (condición2) {
+ # haz otra cosa
+} else {
+ #
+}
+```
+
+---
+
+# Ejecución condicional
+
+Si las condiciones no son mutuamente excluyentes una opción es utilizar la función `base::switch` dentro de una función cuando se pueden enumerar las diferentes alternativas a través de una expresión
+
+```{r}
+
+arithmetic_operation <- function(x, y, 
+                                 op = c("add", "sub", 
+                                        "mul", "div")) {
+  switch(op[1],
+    add = x + y,
+    sub = x - y,
+    mul = x*y,
+    div = x / y
+  )
+}
+
+arithmetic_operation(x = 5, y = 2)
+arithmetic_operation(x = 5, y = 2, op = "sub")
+```
+
+---
+
+# Argumentos de funciones
+
+Conjuntos a los que generalmente pertenece el argumento de una función:
+
+--
+
+- Conjunto que provee los datos a computar
+- Conjunto que controla los detalles de la computación
+
+    + `log(x, base = exp(1))`
+        
+        + `x` provee los datos y `base` controla el computo 
+        
+    + `mean(x, trim = 0, na.rm = FALSE, ...)`
+    
+        + `x` provee los datos y `trim`, `na.rm`, `...` controlan el computo
+
+--
+
+Se recomienda en general que el conjunto que provee los datos se incluya primero que el conjunto que controla los detalles de la computación
+
+---
+
+# Argumentos de funciones
+
+## Elecciones de nombres
+
+- Se recomienda utilizar nombres largos y descriptivos
+- En caso de utilizar nombres cortos entonces estos deben ser comunes y bastante conocidos o usados típicamente en otras funciones
+
+    + `na.rm` para especificar si se remueven o no valores `NA`
+    
+---
+
+# Argumentos de funciones
+    
+## Chequeo de valores
+
+- Verificar que los inputs sean inválidos
+
+```{r error=TRUE}
+mean(1:10,  na.rm = "foo")
+mean("foo", na.rm = TRUE)
+# El mensaje en este caso surge de un if(c(TRUE, FALSE)) 
+# en mean.default
+mean(1:10, na.rm = c(TRUE, FALSE))
+```
+
+---
+
+# Argumentos de funciones
+    
+## Chequeo de valores
+
+Por ejemplo ver parte del código de `mean.default` a modo de ejemplo
+
+```{r eval=FALSE}
+
+> mean.default
+function (x, trim = 0, na.rm = FALSE, ...) 
+{
+    if (!is.numeric(x) && !is.complex(x) && !is.logical(x)) { #<<
+        warning("argument is not numeric or logical: returning NA")
+        return(NA_real_)
+    }
+```
+
+---
+
+# Argumentos de funciones
+    
+## Punto-punto-punto (…)
+
+El argumento `...` captura cualquier número de argumentos que no estén contemplados de otra forma.
+
+- Por ejemplo en `paste(..., sep = " ", collapse = NULL, recycle0 = FALSE)`
+
+```{r}
+# ... captura los argumentos "a", "b" y "c"
+paste("a", "b", "c", sep = ", ")
+```
+
+Sin embargo tiene un costo
+
+```{r}
+sum(c(0,0,0),
+# ... captura TRUE dado que na.mr no es un argumento válido
+     na.mr = TRUE) #<<
+```
+
+---
+
+# Valores de retorno
+
+- ¿Devolver un valor antes hace que tu función sea más fácil de leer?
+- ¿Puedes hacer tu función apta para utilizarla con pipes (`%>%`)?
+
+## Sentencias de retorno explícitas
+
+Revisar `` ?`function` `` donde se indica lo siguiente
+
+```{r eval=FALSE}
+function( arglist ) expr
+return(value)
+```
+
+- La pregunta en el fondo es cuando utilizar `return` (Ver `r Citet(mybib, "wickham_tidyverse_2020")` Sección 3.3). 
+
+    + Caso de estudio: valor absoluto
+    
+$$|x| = \begin{cases}
+         x  & \text{ si } x \geq 0 \\
+         -x & \text{ si } x < 0
+         \end{cases}$$
+
+---
+
+# Valores de retorno
+
+## Sentencias de retorno explícitas
+
+.pull-left[
+```{r}
+abs <- function(x) {
+  if (x >= 0) {
+    x
+  } else {
+    -x
+  }
+}
+```
+]
+
+.pull-right[
+```{r}
+abs <- function(x) {
+  if (x >= 0) {
+    return(x)
+  } 
+  - x
+}
+```
+]
+
+.pull-left[
+```{r}
+
+abs <- function(x) {
+  if (x >= 0) {
+    y <- x
+  } else {
+    y <- -x
+  }
+  return(y)
+}
+```
+]
+---
+
+# Valores de retorno
+
+## Escribir funciones aptas para un pipe
+
+Funciones aptas para pipe:
+
+- **Transformaciones**: se ingresa un objeto como primer argumento y se retorna una versión modificada del mismo
+
+- **Efectos secundarios**: el objeto ingresado no es modificado, sino que la función realiza una acción sobre el objeto
+
+    + Las funciones de efectos secundarios deben retornar “invisiblemente” el primer argumento
+    
+        + Ver por ejemplo `print.factor` o `print.Date` donde en el código se incluye `invisible`
+
+---
+
+# Valores de retorno
+
+## Escribir funciones aptas para un pipe
+
+```{r}
+mostrar_faltantes <- function(df) {
+ n <- sum(is.na(df))
+ cat("Valores faltantes: ", n, "\n", sep = "")
+
+ invisible(df)
+}
+
+mostrar_faltantes(iris)
+# Se puede seguir utilizando el pipe
+mostrar_faltantes(iris) %>% slice_head(n = 1)
+```
+
+---
+
+# Entorno
+
+El entorno de una función controla cómo R encuentra el valor asociado a un nombre
+
+```{r}
+y <- 10
+add <- function(x) {
+  x + y
+}
+add(5)
+```
+
+- `y` no está definido en el entorno de la función
+- Debido a lo anterior R busca la variable `y` en el entorno donde se definio la función
+
+    + `y` se conoce como una variable libre (free variable) dado que no esta definida en el entorno de la función
+    
+- R usa reglas llamadas de **ámbito léxico** (lexical scoping) para encontrar el valor asociado a un nombre.
+
+---
+
+# Entorno
+
+Otros ejemplos
+
+```{r}
+# mean se encuentra en el entorno global
+# donde no se refiere a la constante p en
+# base
+pi <- 2
+f1 <- function(x) { 
+  # w se encuentra en el entorno de f1
+  w <- 3
+  (x + w)^pi }
+f2 <- function(y) {
+  # z se encuentra en el entorno de f2
+  z <- 3
+  f1(y + z) 
+  }
+f2(2)
+```
+
+---
+
+# References
+
+```{r refs, echo=FALSE, results='asis'}
+RefManageR::PrintBibliography(bib = mybib)
+```
+
