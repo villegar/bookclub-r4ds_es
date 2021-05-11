@@ -1,0 +1,185 @@
+---
+title: "Capítulo 20: Vectores"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(datos)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 20.3.5
+
+1. Describe la diferencia entre `is.finite(x)` y `!is.infinite(x)`.
+
+R/ `is.finite` determina si un vector contiene valores finitos o no, mientras que `is.infinite` evalua si un vector contiene valores "infinitos" (`Inf`) o no.
+
+```{r 20-3-5-1, exercise=TRUE}
+x <- 0
+is.finite(x)
+!is.infinite(x)
+
+y <- Inf
+is.finite(y)
+!is.infinite(y)
+```
+ | | 0 | Inf | NA | NaN |
+ |------------------|-----|-----|-----|-----|
+ | `is.finite()` | `TRUE` | `FALSE` | `FALSE` | `FALSE` |
+ | `is.infinite()` | `FALSE` | `TRUE` | `FALSE` | `FALSE` |
+ 
+2. Lee el código fuente de `dplyr::near()` (Pista: para ver el código fuente, escribe el nombre de la función sin `()`). ¿Funcionó?
+
+R/ Para obtener el código podemos ejecutar el siguiente comando:
+
+```{r 20-3-5-2, exercise=TRUE}
+dplyr::near
+```
+
+Podemos ver que la función toma dos vectores, `x` y `y`, adicionalmente toma `tol`(erancia). que por defecto es igual a `r .Machine$double.eps^0.5`.
+
+```{r 20-3-5-2-1, exercise=TRUE}
+dplyr::near(x = pi, y = 3.14, tol = 0.1)
+dplyr::near(x = pi, y = 3.14, tol = 0.01)
+dplyr::near(x = pi, y = 3.14, tol = 0.001)
+```
+
+
+
+3. Un vector de tipo lógico puede tomar 3 valores posibles. ¿Cuántos valores posibles puede tomar un vector de tipo entero? ¿Cuántos valores posibles puede tomar un vector de tipo doble? Usa google para investigar sobre esto.
+
+R/ R usa 32-bit para representar números enteros, $2^{32} - 1$ (1 bit es usado para el signo), adicionalmente `NA_integer_`
+
+```{r 20-3-5-3, exercise=TRUE}
+.Machine$integer.max
+.Machine$double.xmax
+```
+
+4. Idea al menos 4 funciones que te permitan convertir un vector de tipo doble a entero. ¿En qué difieren las funciones? Describe las diferencias con precisión.
+
+R/
+
++ Redondear hacia abajo
++ Redondear hacia arriba
++ Redondear al "cero" más cercano
++ Redondear a la unidad más cercana
+
+```{r 20-3-5-4, exercise=TRUE}
+redondear <- function(x, metodo) {
+  if (metodo == "hacia arriba") {
+    ceiling(x)
+  } else if (metodo == "hacia abajo") {
+    floor(x)
+  } else if (metodo == "cero") {
+    trunc(x)
+  } else if (metodo == "unidad") {
+    round(x, digits = 0)
+  } else {
+    x # Método inválido
+  }
+}
+
+redondear(1.55, "hacia arriba")
+redondear(1.55, "hacia abajo")
+redondear(1.55, "cero")
+redondear(1.55, "unidad")
+```
+
+
+5. ¿Qué funciones del paquete __readr__ te permiten convertir una cadena de caracteres en un vector de tipo lógico, entero y doble?
+
+```{r 20-3-5-5, exercise=TRUE}
+
+```
+
+
+## 20.4.6
+
+1. ¿Qué es lo que `mean(is.na(x))` te dice acerca del vector ‘x’? ¿Y qué es lo que te dice `sum(!is.finite(x))`?
+
+```{r 20-4-6-1, exercise=TRUE}
+
+```
+
+
+2. Lee detenidamente la documentación de `is.vector()`. ¿Qué es lo que esta función realmente testea? ¿Por qué la función `is.atomic()` no concuerda con la definición de vectores atómicos vista anteriormente?
+
+```{r 20-4-6-2, exercise=TRUE}
+
+```
+
+
+3. Compara y contrasta `setNames()` con` purrr::set_names()`.
+
+```{r 20-4-6-3, exercise=TRUE}
+
+```
+
+
+4. Crea funciones que tomen un vector como input y devuelvan:
+
+  - El último valor. ¿Deberías usar `[` o `[[`?
+  - Los elementos en posiciones pares.
+  - Cada elemento excepto el último valor.
+  - Solo las posiciones pares (sin valores perdidos).
+
+```{r 20-4-6-4, exercise=TRUE}
+
+```
+
+
+5. ¿Por qué `x[-which(x > 0)]` no es lo mismo que `x[x <= 0]`?
+
+```{r 20-4-6-5, exercise=TRUE}
+
+```
+
+
+6. ¿Qué sucede cuando realizas un subset con un entero positivo que es mayor que la longitud del vector? ¿Qué sucede cuando realizas un subset con un nombre que no existe?
+
+```{r 20-4-6-6, exercise=TRUE}
+
+```
+
+
+## 20.5.4
+1. Dibuja las siguientes listas como sets anidados:
+
+    * `list(a, b, list(c, d), list(e, f))`
+    * `list(list(list(list(list(list(a))))))`
+
+
+```{r 20-5-4-1, exercise=TRUE}
+
+```
+
+
+2. ¿Qué pasaría si hicieras subsetting a un tibble como si fuera una lista? ¿Cuáles son las principales diferencias entre una lista y un tibble?
+
+```{r 20-5-4-2, exercise=TRUE}
+
+```
+
+## 20.7.4
+1. ¿Qué valor retorna `hms::hms(3600)`? ¿Cómo se imprime? ¿Cuál es la tipo primario sobre en el que se basa el vector aumentado? ¿Qué atributos utiliza?
+
+```{r 20-7-4-1, exercise=TRUE}
+
+```
+
+
+2. Intenta crear un tibble que tenga columnas con diferentes longitudes. ¿Qué es lo que ocurre?
+
+```{r 20-7-4-2, exercise=TRUE}
+
+```
+
+
+3. Teniendo en cuenta la definición anterior, ¿está bien tener una lista como columna en un tibble?
+
+```{r 20-7-4-3, exercise=TRUE}
+
+```
