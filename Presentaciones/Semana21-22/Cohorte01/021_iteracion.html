@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Iteración</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Luis Francisco Gomez Lopez" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Iteración
+## R para ciencia de datos<br>Club de lectura<br>Capítulo 21<br>
+### Luis Francisco Gomez Lopez
+### 2021-05-04 16:35:43 GMT -05:00
+
+---
+
+
+
+
+
+
+
+
+# ¿Qué aprenderás?
+
+En **Grolemund and Wickham (2019) Cap. 21** se abarcará:
+
+--
+
+- El uso de la iteración para reducir la duplicación de código como complemento al uso de funciones
+- El uso de 2 paradigmas de iteración:
+
+    + Programación imperativa utilizando base R
+    + Programación funcional utilizando el paquete `purrr`&lt;sup&gt;1&lt;/sup&gt;
+    
+.footnote[
+[1] Ver la [cheat sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/master/purrr.pdf) para una referencia rápida
+]
+
+---
+
+# Bucles *for*
+
+--
+
+
+```r
+x &lt;- vector(&lt;mode&gt;, &lt;length&gt;) # output 
+for (variable in vector) {    # secuencia
+    # Cuerpo
+}
+```
+
+--
+
+- **Output**: se asigna un espacio para la salidad definiendo de manera explícita el espacio para realizar el proceso de manera más eficiente
+
+- **Secuencia**: en esta parte se especifica sobre lo que se quiere iterar 
+
+- **Cuerpo**: en esta parte se describe el código que se busca ejecutar de manera repetitiva
+
+---
+
+# Variaciones de bucles *for*
+
+- Modificar un objeto existente
+- Iterar sobre nombres o valores
+- Manejar outputs de longitud desconocida
+- Manejar secuencias de longitud desconocida
+
+---
+
+# Variaciones de bucles *for*
+
+## Modificar un objeto existente
+
+
+```r
+tbl &lt;- tibble(x = 1:4)
+min_val &lt;- min(tbl$x)
+max_val &lt;- max(tbl$x)
+
+for (i in 1:nrow(tbl)) {
+  tbl$x[[i]] &lt;- (tbl$x[[i]] - min_val) / 
+                 (max_val - min_val)   
+}
+
+tbl
+```
+
+```
+## # A tibble: 4 x 1
+##       x
+##   &lt;dbl&gt;
+## 1 0    
+## 2 0.333
+## 3 0.667
+## 4 1
+```
+
+---
+
+# Variaciones de bucles *for*
+
+## Longitud de output desconocida
+
+
+```r
+# Generar 3 vectores con una longitud aleatoria
+lst &lt;- vector(mode = "list", length = 3L)
+for (i in seq_along(lst)) {
+  lst[[i]] &lt;- rnorm(n = i)
+}
+# Crear una lista y luego aplanarla
+set_names(x = lst, nm = letters[1:3]) %&gt;% unlist()
+```
+
+```
+##           a          b1          b2          c1          c2          c3 
+## -0.75927645  0.34518679  0.04350447  0.09820874 -1.72895130  2.10815872
+```
+
+---
+
+# Variaciones de bucles *for*
+
+## Longitud de secuencia desconocida
+
+
+```r
+# Lanzar una moneda hasta que salgan 10 caras
+# Revisar el número de lanzamientos
+lanzamiento &lt;- function() {sample(c("S", "C"), size = 1,
+                                  replace = TRUE)}
+
+lanzamientos &lt;- 0
+ncaras &lt;- 0
+set.seed(1234)
+while (ncaras &lt;= 10) {
+  if (lanzamiento() == "C") {
+    ncaras &lt;- ncaras + 1
+  } else {
+    ncaras
+  }
+  lanzamientos &lt;- lanzamientos + 1
+}
+lanzamientos
+```
+
+```
+## [1] 16
+```
+
+---
+
+# Bucles *for* vs. funcionales
+
+- R es un lenguaje de programación funcional por lo que es posible envolver los bucles en una función
+
+--
+
+    + Base R 
+    
+        + Familia apply
+        
+            + `apply()`, `lapply()`, `sapply()`, `vapply()`, `mapply()`, `rapply()`, `tapply()`
+        
+    + Tidyverse
+    
+        + Paquete `purrr` en relación a la familia `map`
+        
+            + `map()`, `map_lgl()`, `map_chr()`, `map_int()`, `map_dbl()`,
+            `map_raw()`, `map_dfr()`, `map_dfc()`, `walk()` 
+
+---
+
+# Las funciones map
+
+En el caso de data frames se itera sobre las columnas
+
+
+```r
+dta_fr &lt;- data.frame(x = 1:3, y = 4:6)
+unclass(dta_fr)
+```
+
+```
+## $x
+## [1] 1 2 3
+## 
+## $y
+## [1] 4 5 6
+## 
+## attr(,"row.names")
+## [1] 1 2 3
+```
+
+
+```r
+map(.x = dta_fr, .f = mean)
+```
+
+```
+## $x
+## [1] 2
+## 
+## $y
+## [1] 5
+```
+
+---
+
+# Las funciones map
+
+
+```r
+dta_fr &lt;- data.frame(x = 1:3, y = 4:6)
+map(dta_fr, mean)
+```
+
+```
+## $x
+## [1] 2
+## 
+## $y
+## [1] 5
+```
+
+- `map` solo genera vectores
+
+    + Por ejemplo no genera matrices como si lo podría hacer `vapply()`
+
+
+```r
+map_dbl(dta_fr, mean) %&gt;% is.vector(mode = "any")
+```
+
+```
+## [1] TRUE
+```
+
+---
+
+# Las funciones map
+
+
+```r
+fun_min_max &lt;- function(x) {c(min = min(x), max = max(x))}
+vapply(X = dta_fr, FUN = fun_min_max, FUN.VALUE = numeric(2))
+```
+
+```
+##     x y
+## min 1 4
+## max 3 6
+```
+
+
+```r
+map(.x = dta_fr, .f = fun_min_max)
+```
+
+```
+## $x
+## min max 
+##   1   3 
+## 
+## $y
+## min max 
+##   4   6
+```
+
+---
+
+# Manejo de errores
+
+Uso de la función `purrr::safely()` para retornar una versión modificada de una función donde se obtiene una lista con 2 elementos:
+
+- `result`: es el resultado general donde si existe un error se obtiene `NULL`
+
+- `error`: se indica el error donde si no existe un error se obtiene `NULL`
+
+
+```r
+map(.x = "a", .f = safely(.f = log) , base = exp(1))
+```
+
+```
+## [[1]]
+## [[1]]$result
+## NULL
+## 
+## [[1]]$error
+## &lt;simpleError in .Primitive("log")(x, base): non-numeric argument to mathematical function&gt;
+```
+
+---
+
+# *map* sobre múltiples argumentos
+
+En este caso es posible utilizar la familia `pmap`
+
+
+```r
+set.seed(1234)
+n &lt;- 1:3
+mean &lt;- c(-1, 0, 1)
+sd &lt;- c(1, 5, 10)
+pmap(.l = list(n, mean, sd), .f = rnorm)
+```
+
+```
+## [[1]]
+## [1] -2.207066
+## 
+## [[2]]
+## [1] 1.387146 5.422206
+## 
+## [[3]]
+## [1] -22.456977   5.291247   6.060559
+```
+
+---
+
+# *map* sobre múltiples argumentos y funciones
+
+
+```r
+f &lt;- c("runif", "rnorm", "rpois")
+param &lt;- list(
+  list(min = -1, max = 1), 
+  list(sd = 5), 
+  list(lambda = 10))
+```
+
+
+```r
+set.seed(1234)
+exec(.fn = f[[1]], !!!param[[1]], n = 5)
+```
+
+```
+## [1] -0.7725932  0.2445988  0.2185495  0.2467589  0.7218308
+```
+
+```r
+exec(.fn = f[[2]], !!!param[[2]], n = 5)
+```
+
+```
+## [1]  1.7964457 -3.6523658  0.1786496  0.5648753  7.1427601
+```
+
+```r
+exec(.fn = f[[3]], !!!param[[3]], n = 5)
+```
+
+```
+## [1] 13  8  7  6 12
+```
+
+---
+
+# *map* sobre múltiples argumentos y funciones
+
+
+```r
+set.seed(1234)
+map(.x = seq_along(f), 
+    .f = ~ exec(.fn = f[[.]], !!!param[[.]], n = 5))
+```
+
+```
+## [[1]]
+## [1] -0.7725932  0.2445988  0.2185495  0.2467589  0.7218308
+## 
+## [[2]]
+## [1]  1.7964457 -3.6523658  0.1786496  0.5648753  7.1427601
+## 
+## [[3]]
+## [1] 13  8  7  6 12
+```
+
+--
+
+- En esta parte se utiliza `rlang::exec()` dado que `purrr::invoke_map` no se continuará desarrollando donde se recomienda el uso de `rlang::exec()`
+
+- También se utiliza el operador *big-bang*, `!!!`, que permite separar en argumentos individuales los objetos de una lista para que puedan ser incluidos cuando en una funcion existe el argumento, `...`
+
+---
+
+# Walk
+
+Si se requiere devolver de manera invisible el objeto `.x` se puede utilizar `purrr::walk()` 
+
+
+```r
+list(1, 2, 3) %&gt;% 
+  walk(.f = print) %&gt;% 
+  # Se puede seguir accediendo al objeto 
+  # .x = list(1, 2, 3) despues de utilizar 
+  # walk
+  length()
+```
+
+```
+## [1] 1
+## [1] 2
+## [1] 3
+```
+
+```
+## [1] 3
+```
+
+---
+
+# Otros patrones para los bucles *for*
+
+- Funciones predictivas
+
+    + `keep` y `discard`
+    + `some` y `every`
+    + `detect` y `detect_index`: no encontré una aplicación para data frames
+    + `head_while` y `tail_while`: no encontré una aplicación para data frames
+
+- Reducir y acumular
+
+    + `reduce`
+    + `accumulate`
+---
+
+# Otros patrones para los bucles *for*
+
+- Funciones predictivas
+
+
+```r
+# Aunque exister la alternativa
+# datos::flores %&gt;% select(where(is.factor))
+datos::flores %&gt;% keep(.p = is.factor) %&gt;% str()
+```
+
+```
+## 'data.frame':	150 obs. of  1 variable:
+##  $ Especies: Factor w/ 3 levels "setosa","versicolor",..: 1 1 1 1 1 1 1 1 1 1 ...
+```
+
+```r
+datos::flores %&gt;% every(.p = is.double)
+```
+
+```
+## [1] FALSE
+```
+
+---
+
+# Otros patrones para los bucles *for*
+
+- Reducir y acumular
+
+
+```r
+# Sirve bastante para realizar left_join a 
+# varias tibbles
+x &lt;- tibble(id = 1:3, i = 4:6)
+y &lt;- tibble(id = 1:3, j = 7:9)
+z &lt;- tibble(id = 1:3, k = 10:12)
+reduce(.x = list(x, y, z), 
+       .f = left_join, by = "id", 
+       .dir = "forward")
+```
+
+```
+## # A tibble: 3 x 4
+##      id     i     j     k
+##   &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1     1     4     7    10
+## 2     2     5     8    11
+## 3     3     6     9    12
+```
+
+```r
+# Con accumulate se vería el proceso respecto a 
+# como se van uniendo las tibbles
+```
+
+---
+
+# References
+
+Grolemund, G. and H. Wickham (2019). _R para Ciencia de Datos_. URL:
+[http://es.r4ds.hadley.nz/](http://es.r4ds.hadley.nz/) (visited on Jan.
+06, 2021).
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
