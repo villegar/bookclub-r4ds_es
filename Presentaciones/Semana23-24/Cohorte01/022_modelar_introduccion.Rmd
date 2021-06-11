@@ -1,0 +1,74 @@
+---
+title: "Modelar: Introducción"
+subtitle: "R para ciencia de datos<br>Club de lectura<br>Capítulo 22<br>"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-05-31 15:20:56 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo      = TRUE, 
+                      fig.align = "center")
+```
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(datos)
+library(xaringan)
+library(RefManageR)
+```
+
+```{r load_references, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style     = "authoryear",
+  cite.style    = "authoryear",
+  style         = "markdown",
+  hyperlink     = FALSE,
+  dashed        = FALSE
+)
+
+mybib <- RefManageR::ReadBib(file  = "./R_for_data_science.bib",
+                             check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(mybib, "grolemund_r_2019")` Sección Modelar** se abarcará:
+
+- Los conceptos básicos de los modelos utilizando datos simulados y la familia de modelos lineales.
+- Cómo usar modelos para extraer patrones conocidos en datos reales
+- Cómo usar muchos modelos simples para facilitar la comprensión de conjuntos de datos complejos
+
+---
+
+# ¿Qué no aprenderás?
+
+- La teoría matemática que subyace a los modelos. Si se desea una introducción a este tema en **`r Citet(mybib, "grolemund_r_2019")` Sección Modelar** se recomiendan los siguientes libros:
+
+    + **`r Citet(mybib, "james_introduction_2013")`**
+    + **`r Citet(mybib, "hastie_elements_2009")`**
+
+- El ecosistema de `tidymodels`<sup>1</sup>. Si se desea una introducción a este tema se recomienda el siguiente libro:
+
+    + **`r Citet(mybib, "silge_tidy_2021")`**
+
+.footnote[
+[1] Ver https://www.tidymodels.org/
+]
+
+---
+
+# References
+
+```{r refs, echo=FALSE, results='asis'}
+RefManageR::PrintBibliography(bib = mybib)
+```

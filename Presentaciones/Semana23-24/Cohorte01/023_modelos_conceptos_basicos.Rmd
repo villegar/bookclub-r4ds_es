@@ -1,0 +1,729 @@
+---
+title: "Modelos: conceptos básicos"
+subtitle: "R para ciencia de datos<br>Club de lectura<br>Capítulo 23<br>"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-05-31 17:10:09 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo      = TRUE, 
+                      fig.align = "center")
+```
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(datos)
+library(xaringan)
+library(RefManageR)
+library(modelr)
+library(tidymodels)
+library(ggrepel)
+library(latex2exp)
+```
+
+```{r load_references, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style     = "authoryear",
+  cite.style    = "authoryear",
+  style         = "markdown",
+  hyperlink     = FALSE,
+  dashed        = FALSE
+)
+
+mybib <- RefManageR::ReadBib(file  = "./R_for_data_science.bib",
+                             check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(mybib, "grolemund_r_2019")` Capítulo 23** se abarcará:
+
+--
+
+- Las partes en un modelo:
+
+    + Definición de una **familia modelos**
+    + Generación de un **modelo ajustado**
+
+- La visualización de un modelo utilizando sus predicciones y residuos para tratar de entender que captura y no captura
+
+- Una descripción general respecto a cómo R utiliza formulas para expresar una familia de modelos
+
+- Una descripción de lo que R hace cuando se tienen datos faltantes y se ajusta un modelo 
+
+--
+
+Adicionalmente en **`r Citet(mybib, "grolemund_r_2019")` Capítulo 23** se cierra con un resumen respecto a las  familias de modelos que se pueden utilizar en R como alternativa a los modelos lineales
+
+---
+
+# Un modelo simple
+
+Utilizaremos datos simulatos y la familia de modelos $y = a_0 + a_1x$ para ajustar un modelo donde buscamos estimar $a_0$ y $a_1$ asumiendo que no conocemos a priori sus verdaderos valores
+
+- Datos simulados
+
+```{r}
+n <- 20
+set.seed(1234)
+datos_simulados <- tibble(e = rnorm(n = n, mean = 0, sd = 10),
+                          x = 1:n,
+                          y = 3 + 4*x + e)
+
+datos_simulados %>% slice_head(n = 5)
+```
+
+---
+
+# Un modelo simple
+
+¿Qué valores deberiamos fijar para $a_o$ y $a_1$? Necesitamos un criterio para fijar estos valores.
+
+
+```{r, fig.height=5, fig.width=10}
+datos_simulados %>%
+  ggplot(aes(x, y)) + 
+  geom_point()
+```
+
+---
+
+# Un modelo simple
+
+Buscamos una estimación del modelo $\hat{y} = \hat{a}_0 + \hat{a}_1x$ donde $\hat{a}_0$, $\hat{a}_1$ son los valores estimados de $a_0$, $a_1$ y $\hat{y}$ es la predicción de $y$
+
+La idea es minimizar de alguna manera la distancia entre cada $\hat{y}_i$ y $y_i$ donde esta se denomina como $\hat{e_i} = y_i - \hat{y}_i$
+
+```{r echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+adjust_model <- lm(data = datos_simulados, formula = y ~ x) %>% 
+  tidy()
+
+information_model <- lm(data = datos_simulados, formula = y ~ x) %>% 
+  augment()
+
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = adjust_model$estimate[[1]], 
+              slope = adjust_model$estimate[[2]], 
+              color = "red") + 
+  geom_segment(aes(xend = x, yend = .fitted),
+               color = "blue") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = \\hat{a}_0 + \\hat{a}_1x$"),
+           size = 6) +
+  annotate(geom = "label", 
+           x = 19, y = 107, 
+           label = TeX("$y_i$"),
+           size = 6) +
+  annotate(geom = "label", 
+           x = 19, y = 83.7, 
+           label = TeX("$\\hat{y}_i$"),
+           size = 6) +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 53,
+           size = 1, arrow = arrow()) +
+  annotate("segment", 
+           x = 19.5, xend = 19.5, y = 107, yend = 83.7,
+           arrow = arrow(ends = "both", angle = 90, length = unit(.2,"cm")))
+```
+
+---
+
+# Un modelo simple
+
+En estadística el criterio que usualmente se utiliza es la minimización de la **raíz del error cuadrático medio **
+
+$$\begin{split}
+  y_i - \hat{y}_i& \Longrightarrow (\hat{y}_i - y_i)^2 \\
+  & \Longrightarrow (\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2 \\
+  & \Longrightarrow \frac{(\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2}{n} \\
+  & \Longrightarrow \sqrt{\frac{(\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2}{n}} \\
+  & \Longrightarrow \sqrt{\frac{\sum_{i=1}^n ( \hat{y}_i - y_i)^2}{n}} \\
+  & \Longrightarrow min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}
+  \end{split}$$
+
+
+---
+
+# Un modelo simple
+
+Necesitamos primero una función para calcular $\hat{a}_0 + \hat{a}_1x_i$
+
+```{r}
+prediccion <- function(a, datos) {
+  a[[1]] + datos$x * a[[2]]
+}
+prediccion(c(7, 1.5), datos_simulados) %>% head(n = 7)
+```
+
+Luego una función para calcular $\sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}$
+
+```{r}
+rms <- function(a, datos) {
+  diff <- prediccion(a, datos) - datos$y 
+  sqrt(mean(diff^2))
+}
+rms(c(7, 1.5), datos_simulados)
+```
+
+---
+
+# Un modelo simple
+
+¿Cómo podemos encontrar $\hat{a}_0$ y $\hat{a}_1$ tal que $min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}$?
+
+--
+
+Se contemplan las siguientes 3 alternativas:
+
+- Construir una cuadrícula de valores con puntos igualmente espaciados para ${a}_0$ y $\hat{a}_1$ con el objetivo de escoger aquella tupla que minimice el error cuadrático medio entre todas las tuplas que se tuvieron en cuenta
+
+--
+
+- Utilizar un algoritmo que busque minimizar una función encontrando un mínimo local y que con suerte sea un mínimo global
+
+--
+
+- Utilizar las herramientas de la geometría, el cálculo y el álgebra lineal para resolver el problema verificando si se cumplen las condiciones suficientes para que exista un mínimo global
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+```{r }
+cuadricula <- tidyr::expand_grid(a_0 = seq(from = 0, to = 8, 
+                                           length.out = 10),
+                                 a_1 = seq(from = 0, to = 6, 
+                                           length.out = 10)) %>% 
+  mutate(rms = map2_dbl(.x = a_0, 
+                           .y = a_1,
+                           ~ rms(c(.x, .y),
+                                 datos_simulados)))
+
+cuadricula %>% slice_head(n = 5)
+```
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+```{r echo=FALSE, fig.height=6.5, fig.width=6.5} 
+ggplot(data = cuadricula, aes(a_0, a_1)) + 
+  geom_point(aes(fill = rms == min(rms)), 
+             color = "black", shape = 21, size = 3,
+             show.legend = FALSE) +
+  annotate(x = 0.889, y = 4, 
+           geom = "label", 
+           label = str_glue("(a_0 = 0.889, a_1 = 4)
+                            rms = 9.89"),
+           fill = "#00BFC4",
+           vjust = -0.25)
+```
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+```{r  echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = 0.889, 
+              slope = 4, 
+              color = "#00BFC4") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = 0.889 + 4x$"),
+           size = 6) +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 53,
+           size = 1, arrow = arrow())
+```
+
+---
+
+# Un modelo simple
+
+- Algoritmo de optimización
+
+```{r}
+
+rms_datos_simulados <- function(a) {
+  diff <- prediccion(a, datos_simulados) - datos_simulados$y 
+  sqrt(mean(diff^2))
+}
+
+rms_value <- stats::optim(par = c(0,0), 
+                          fn = rms_datos_simulados)$value
+a_optim <- stats::optim(par = c(0,0), 
+                        fn = rms_datos_simulados)$par
+```
+
+```{r}
+rms_value
+a_optim
+```
+
+---
+
+# Un modelo simple
+
+- Algoritmo de optimización
+
+```{r  echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = a_optim[[1]], 
+              slope = a_optim[[2]], 
+              color = "#00BA38") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = -3.008663 + 4.333647x$"),
+           size = 6) +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 53,
+           size = 1, arrow = arrow())
+```
+
+---
+
+# Modelo simple
+
+- Geometría, cálculo y álgebra lineal
+
+$$\begin{split}
+  min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}} & \Longrightarrow min_{\hat{a}_0, \hat{a}_1} \sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2 \\
+  & \Longrightarrow \hat{a}_1 = \frac{\sum_{i = 1}^n (x_i - \overline{x})(y_i - \overline{y})}{\sum_{i = 1}^n (x_i - \overline{x})^2} \\
+  & \Longrightarrow \hat{a}_0 = \overline{y} - \hat{a}_1\overline{x} 
+  \end{split}$$
+
+Donde $\overline{x} = \frac{1}{n}\sum_{i = 1}^n x_i$ y $\overline{y} = \frac{1}{n}\sum_{i = 1}^n y_i$. Además se puede demostrar que $\hat{a}_0$ y $\hat{a}_1$ corresponden a un mínimo global (Ver [Sufficient & Necessary Conditions for Global Optima](https://www.tutorialspoint.com/convex_optimization/convex_optimization_sufficient_necessary_conditions_for_global_optima.htm))
+
+```{r}
+coef <- lm(data = datos_simulados, formula = y ~ x)$coef
+coef
+```
+
+---
+
+# Modelo simple
+
+- Geometría, cálculo y álgebra lineal
+
+```{r  echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = coef[[1]], 
+              slope = coef[[2]], 
+              color = "#619CFF") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = -3.010961 + 4.333745x$"),
+           size = 6) +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 53,
+           size = 1, arrow = arrow())
+```
+
+---
+
+# Visualización de modelos
+
+- Modelo verdadero sin error: $y = 3 + 4*x$
+- Modelo ajustado: $\hat{y} = -3.010961 + 4.333745x$
+
+```{r  echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = coef[[1]], 
+              slope = coef[[2]], 
+              color = "#619CFF") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = -3.010961 + 4.333745x$"),
+           size = 6,
+           fill = "#619CFF") +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 53,
+           size = 1, arrow = arrow(),
+           color = "#619CFF") + 
+  geom_abline(intercept = 3, 
+              slope = 4, 
+              color = "#F8766D") + 
+  annotate(geom = "label", 
+           x = 5, y = 60, 
+           label = TeX("$y = 3 + 4x$"),
+           size = 6,
+           fill = "#F8766D") +
+  annotate("segment", 
+           x = 5, xend = 4, y = 50, yend = 25,
+           size = 1, arrow = arrow(),
+           color = "#F8766D")
+```
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: $e_i \sim \mathcal{N}(0, 10)$
+- Error estimado: $\hat{e_i} = y_i - \hat{y}_i$
+
+```{r echo=FALSE}
+resumen_modelo <- information_model %>% 
+  select(x, y, .fitted, .resid) %>% 
+  bind_cols(select(datos_simulados, e)) %>% 
+  set_names(nm = c("x", "y", "y_estimado", "e_estimado", "e"))
+
+resumen_modelo %>% 
+  slice_head(n = 12)
+```
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: $e_i \sim \mathcal{N}(0, 10)$
+- Error estimado: $\hat{e_i} = y_i - \hat{y}_i$
+
+```{r echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+
+resumen_modelo %>% 
+  pivot_longer(cols = c("e_estimado", "e"), 
+               names_to = "tipo_error", 
+               values_to = "valor_error") %>% 
+  ggplot() +
+  geom_density(mapping = aes(valor_error)) +
+  facet_wrap(facets = vars(tipo_error), 
+             nrow = 1, ncol = 2)
+```
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: $e_i \sim \mathcal{N}(0, 10)$
+- Error estimado: $\hat{e_i} = y_i - \hat{y}_i$
+
+```{r echo=FALSE, warning=FALSE, fig.height=5, fig.width=10}
+resumen_modelo %>% 
+  pivot_longer(cols = c("e_estimado", "e"), 
+               names_to = "tipo_error", 
+               values_to = "valor_error") %>% 
+  ggplot(mapping = aes(x, valor_error)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(facets = vars(tipo_error), 
+             nrow = 1, ncol = 2)
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- R utiliza una forma de convertir las fórmulas tales como $y \sim x$ en la forma de expresar los modelos, $y = \hat{a}_0  + \hat{a}_1x$
+
+```{r}
+model_matrix(data = datos_simulados, 
+             formula = y ~ x) %>% 
+  slice_head(n = 4)
+```
+
+$$\begin{split}
+  y & = \hat{a}_0 + \hat{a}_1x \\
+  \begin{bmatrix}
+    y_1    \\
+    \vdots \\
+    y_n
+  \end{bmatrix} & = 
+  \begin{bmatrix}
+    1 & x_1    \\
+    \vdots & \vdots \\
+    1 & x_n
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1
+  \end{bmatrix}
+  \end{split}$$
+
+---
+
+# Fórmulas y familias de modelos
+
+- Variables categóricas: $y = \hat{a}_0  + \hat{a}_1x_1 + \hat{a}_2x_2 \text{ donde } x_{i2} \in [a, b]$
+
+```{r, warning=FALSE, fig.height=5, fig.width=10}
+mutate(.data = datos_simulados, 
+       tipo = c(rep("a", 10), rep("b", 10))) %>% 
+  ggplot(aes(tipo, y)) + geom_point()
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- En el caso de variables categóricas estas se deben representar mediante números:
+$y = \hat{a}_0  + \hat{a}_1x_1 + \hat{a}_2x_2 \text{ donde } x_{i2} \in [a, b]$
+
+.pull-left[ 
+```{r echo=FALSE}
+model_matrix(data = datos_simulados %>% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+             formula = y ~ x + tipo) %>% 
+  slice_head(n = 4)
+```
+]
+
+.pull-right[ 
+```{r echo=FALSE}
+model_matrix(data = datos_simulados %>% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+             formula = y ~ x + tipo) %>% 
+  slice_tail(n = 4)
+```
+]
+
+$$\begin{split}
+  y & = \hat{a}_0 + \hat{a}_1x_1 +  \hat{a}_2x_2  \text{ donde } x_{i2} \in [a, b] \\
+  \begin{bmatrix}
+    y_1     \\
+    y_2     \\
+    \vdots  \\
+    y_{n-1} \\
+    y_n
+  \end{bmatrix} & = 
+  \begin{bmatrix}
+    1 & x_{11} & 0  \\
+    1 & x_{21} & 0  \\
+    \vdots & \vdots \\
+    1 & x_{n-1,1} & 1 \\
+    1 & x_{n,1} & 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1    \\
+    \hat{a}_2    
+  \end{bmatrix}
+  \end{split}$$
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas y continuas: $y = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2 + \text{ donde } x_{i2} \in [a, b]$
+
+```{r}
+model_matrix(data = datos_simulados %>% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+             formula = y ~ x*tipo) %>% #<<
+  slice_head(n = 10)
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas y continuas: $y = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2 + \text{ donde } x_{i2} \in [a, b]$
+
+```{r}
+model_matrix(data = datos_simulados %>% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+             formula = y ~ x*tipo) %>% #<<
+  slice_tail(n = 10)
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas
+
+```{r}
+coef <- lm(data = datos_simulados %>% 
+     mutate(tipo = c(rep("a", 10), rep("b", 10))),
+   formula =  y ~ x*tipo)$coef #<< 
+coef
+```
+
+
+$$\begin{split}
+  y & = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2   \text{ donde }  x_{i2} \in [a, b] \\
+  \begin{bmatrix}
+    y_1     \\
+    y_2     \\
+    \vdots  \\
+    y_{n-1} \\
+    y_n
+  \end{bmatrix} & = 
+  \begin{bmatrix}
+    1 & x_{11} & 0 & 0  \\
+    1 & x_{21} & 0 & 0  \\
+    \vdots & \vdots \\
+    1 & x_{n-1,1} & 1 & x_{11} \\
+    1 & x_{n,1} & 1 & x_{21}
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1    \\
+    \hat{a}_2    \\
+    \hat{a}_3
+  \end{bmatrix}
+  \end{split}$$
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas
+
+```{r echo=FALSE, warning=FALSE, fig.height=6, fig.width=10}
+information_model %>%
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_abline(intercept = coef[[1]], 
+              slope = coef[[2]], 
+              color = "#619CFF") + 
+  annotate(geom = "label", 
+           x = 15, y = 15, 
+           label = TeX("$\\hat{y} = -1.103585 + 3.648153x$"),
+           size = 3,
+           fill = "#619CFF") +
+  annotate("segment", 
+           x = 15, xend = 13.5, y = 23, yend = 48,
+           size = 1, arrow = arrow(),
+           color = "#619CFF") + 
+  geom_abline(intercept = coef[[1]] + coef[[3]], 
+              slope = coef[[2]] + coef[[4]], 
+              color = "#F8766D") + 
+  annotate(geom = "label", 
+           x = 5, y = 60, 
+           label = TeX("$y = (1.103585 -21.544102) + (3.648153 + 1.787899)x$"),
+           size = 3,
+           fill = "#F8766D") +
+  annotate("segment", 
+           x = 5, xend = 4, y = 50, yend = 5,
+           size = 1, arrow = arrow(),
+           color = "#F8766D")
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+
+- Transformaciones
+
+Estima modelos como por ejemplo: $y = \hat{a}_0 + \hat{a}_1x + \hat{a}_2x^2 + \hat{a}_3x^3$
+
+```{r warning=FALSE, fig.height=4.5, fig.width=10}
+  ggplot(data = datos_simulados, aes(x, y)) + geom_point() + 
+  geom_smooth(method = "lm", se = FALSE,
+              formula = y ~ x + I(x^2) + I(x^3)) #<<
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- Transformaciones
+
+Estima modelos como por ejemplo: $y = \sum_{i=0}^{12} \hat{a}_ix^i$
+
+```{r warning=FALSE, fig.height=4.5, fig.width=10}
+  ggplot(data = datos_simulados, aes(x, y)) + geom_point() + 
+  geom_smooth(method = "lm", se = FALSE,
+              formula = y ~ poly(x, 12)) #<<
+```
+
+---
+
+# Valores faltantes
+
+```{r}
+datos_simulados %>%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %>% 
+  slice_tail(n = 10)
+```
+
+
+---
+# Valores faltantes
+
+- R elimina todas las filas con valores faltantes de forma silenciosa
+
+```{r}
+datos_simulados %>%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %>% #<<
+  lm(data = ., formula = y ~ x) %>% 
+  .$coef
+```
+
+```{r}
+datos_simulados %>%
+  lm(data = ., formula = y ~ x) %>% 
+  .$coef
+```
+
+---
+
+# Valores faltantes
+
+- De todas maneras es posible verificar el número de observaciones utilizadas para estimar el modelo
+
+```{r}
+datos_simulados %>%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %>% 
+  lm(data = ., formula = y ~ x) %>% 
+  nobs() #<<
+```
+
+- De esa manera se puede comparar con el número de filas que la tabla rectangular que contenga los datos
+
+```{r}
+datos_simulados %>%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %>% 
+  nrow()
+```
+
+---
+
+# Valores faltantes
+
+- Otra alternativa es utilizar `broom::glance` que incorpora `nobs` dentro del reporte de información de todo el modelo
+
+```{r}
+datos_simulados %>%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %>% 
+  lm(data = ., formula = y ~ x) %>% 
+  broom::glance() %>% #<<
+  select(1:5, nobs)   #<<
+```
+
+---
+
+# References
+
+```{r refs, echo=FALSE, results='asis'}
+RefManageR::PrintBibliography(bib = mybib)
+```

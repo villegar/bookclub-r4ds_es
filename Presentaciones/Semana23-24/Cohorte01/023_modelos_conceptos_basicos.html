@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Modelos: conceptos básicos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Luis Francisco Gomez Lopez" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Modelos: conceptos básicos
+## R para ciencia de datos<br>Club de lectura<br>Capítulo 23<br>
+### Luis Francisco Gomez Lopez
+### 2021-05-31 17:10:09 GMT -05:00
+
+---
+
+
+
+
+
+
+
+
+# ¿Qué aprenderás?
+
+En **Grolemund and Wickham (2019) Capítulo 23** se abarcará:
+
+--
+
+- Las partes en un modelo:
+
+    + Definición de una **familia modelos**
+    + Generación de un **modelo ajustado**
+
+- La visualización de un modelo utilizando sus predicciones y residuos para tratar de entender que captura y no captura
+
+- Una descripción general respecto a cómo R utiliza formulas para expresar una familia de modelos
+
+- Una descripción de lo que R hace cuando se tienen datos faltantes y se ajusta un modelo 
+
+--
+
+Adicionalmente en **Grolemund and Wickham (2019) Capítulo 23** se cierra con un resumen respecto a las  familias de modelos que se pueden utilizar en R como alternativa a los modelos lineales
+
+---
+
+# Un modelo simple
+
+Utilizaremos datos simulatos y la familia de modelos `\(y = a_0 + a_1x\)` para ajustar un modelo donde buscamos estimar `\(a_0\)` y `\(a_1\)` asumiendo que no conocemos a priori sus verdaderos valores
+
+- Datos simulados
+
+
+```r
+n &lt;- 20
+set.seed(1234)
+datos_simulados &lt;- tibble(e = rnorm(n = n, mean = 0, sd = 10),
+                          x = 1:n,
+                          y = 3 + 4*x + e)
+
+datos_simulados %&gt;% slice_head(n = 5)
+```
+
+```
+## # A tibble: 5 x 3
+##        e     x     y
+##    &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;
+## 1 -12.1      1 -5.07
+## 2   2.77     2 13.8 
+## 3  10.8      3 25.8 
+## 4 -23.5      4 -4.46
+## 5   4.29     5 27.3
+```
+
+---
+
+# Un modelo simple
+
+¿Qué valores deberiamos fijar para `\(a_o\)` y `\(a_1\)`? Necesitamos un criterio para fijar estos valores.
+
+
+
+```r
+datos_simulados %&gt;%
+  ggplot(aes(x, y)) + 
+  geom_point()
+```
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Un modelo simple
+
+Buscamos una estimación del modelo `\(\hat{y} = \hat{a}_0 + \hat{a}_1x\)` donde `\(\hat{a}_0\)`, `\(\hat{a}_1\)` son los valores estimados de `\(a_0\)`, `\(a_1\)` y `\(\hat{y}\)` es la predicción de `\(y\)`
+
+La idea es minimizar de alguna manera la distancia entre cada `\(\hat{y}_i\)` y `\(y_i\)` donde esta se denomina como `\(\hat{e_i} = y_i - \hat{y}_i\)`
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Un modelo simple
+
+En estadística el criterio que usualmente se utiliza es la minimización de la **raíz del error cuadrático medio **
+
+`$$\begin{split}
+  y_i - \hat{y}_i&amp; \Longrightarrow (\hat{y}_i - y_i)^2 \\
+  &amp; \Longrightarrow (\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2 \\
+  &amp; \Longrightarrow \frac{(\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2}{n} \\
+  &amp; \Longrightarrow \sqrt{\frac{(\hat{y}_1 - y_1)^2 + (\hat{y}_2 - y_2)^2 + \cdots + (\hat{y}_n - y_n)^2}{n}} \\
+  &amp; \Longrightarrow \sqrt{\frac{\sum_{i=1}^n ( \hat{y}_i - y_i)^2}{n}} \\
+  &amp; \Longrightarrow min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}
+  \end{split}$$`
+
+
+---
+
+# Un modelo simple
+
+Necesitamos primero una función para calcular `\(\hat{a}_0 + \hat{a}_1x_i\)`
+
+
+```r
+prediccion &lt;- function(a, datos) {
+  a[[1]] + datos$x * a[[2]]
+}
+prediccion(c(7, 1.5), datos_simulados) %&gt;% head(n = 7)
+```
+
+```
+## [1]  8.5 10.0 11.5 13.0 14.5 16.0 17.5
+```
+
+Luego una función para calcular `\(\sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}\)`
+
+
+```r
+rms &lt;- function(a, datos) {
+  diff &lt;- prediccion(a, datos) - datos$y 
+  sqrt(mean(diff^2))
+}
+rms(c(7, 1.5), datos_simulados)
+```
+
+```
+## [1] 27.39962
+```
+
+---
+
+# Un modelo simple
+
+¿Cómo podemos encontrar `\(\hat{a}_0\)` y `\(\hat{a}_1\)` tal que `\(min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}}\)`?
+
+--
+
+Se contemplan las siguientes 3 alternativas:
+
+- Construir una cuadrícula de valores con puntos igualmente espaciados para `\({a}_0\)` y `\(\hat{a}_1\)` con el objetivo de escoger aquella tupla que minimice el error cuadrático medio entre todas las tuplas que se tuvieron en cuenta
+
+--
+
+- Utilizar un algoritmo que busque minimizar una función encontrando un mínimo local y que con suerte sea un mínimo global
+
+--
+
+- Utilizar las herramientas de la geometría, el cálculo y el álgebra lineal para resolver el problema verificando si se cumplen las condiciones suficientes para que exista un mínimo global
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+
+```r
+cuadricula &lt;- tidyr::expand_grid(a_0 = seq(from = 0, to = 8, 
+                                           length.out = 10),
+                                 a_1 = seq(from = 0, to = 6, 
+                                           length.out = 10)) %&gt;% 
+  mutate(rms = map2_dbl(.x = a_0, 
+                           .y = a_1,
+                           ~ rms(c(.x, .y),
+                                 datos_simulados)))
+
+cuadricula %&gt;% slice_head(n = 5)
+```
+
+```
+## # A tibble: 5 x 3
+##     a_0   a_1   rms
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1     0 0      50.2
+## 2     0 0.667  42.4
+## 3     0 1.33   34.7
+## 4     0 2      27.1
+## 5     0 2.67   19.9
+```
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Un modelo simple
+
+- Construcción de una cuadrícula espaciada 
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Un modelo simple
+
+- Algoritmo de optimización
+
+
+```r
+rms_datos_simulados &lt;- function(a) {
+  diff &lt;- prediccion(a, datos_simulados) - datos_simulados$y 
+  sqrt(mean(diff^2))
+}
+
+rms_value &lt;- stats::optim(par = c(0,0), 
+                          fn = rms_datos_simulados)$value
+a_optim &lt;- stats::optim(par = c(0,0), 
+                        fn = rms_datos_simulados)$par
+```
+
+
+```r
+rms_value
+```
+
+```
+## [1] 9.692161
+```
+
+```r
+a_optim
+```
+
+```
+## [1] -3.008663  4.333647
+```
+
+---
+
+# Un modelo simple
+
+- Algoritmo de optimización
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Modelo simple
+
+- Geometría, cálculo y álgebra lineal
+
+`$$\begin{split}
+  min_{\hat{a}_0, \hat{a}_1} \sqrt{\frac{\sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2}{n}} &amp; \Longrightarrow min_{\hat{a}_0, \hat{a}_1} \sum_{i=1}^n ( \hat{a}_0 + \hat{a}_1x_i - y_i)^2 \\
+  &amp; \Longrightarrow \hat{a}_1 = \frac{\sum_{i = 1}^n (x_i - \overline{x})(y_i - \overline{y})}{\sum_{i = 1}^n (x_i - \overline{x})^2} \\
+  &amp; \Longrightarrow \hat{a}_0 = \overline{y} - \hat{a}_1\overline{x} 
+  \end{split}$$`
+
+Donde `\(\overline{x} = \frac{1}{n}\sum_{i = 1}^n x_i\)` y `\(\overline{y} = \frac{1}{n}\sum_{i = 1}^n y_i\)`. Además se puede demostrar que `\(\hat{a}_0\)` y `\(\hat{a}_1\)` corresponden a un mínimo global (Ver [Sufficient &amp; Necessary Conditions for Global Optima](https://www.tutorialspoint.com/convex_optimization/convex_optimization_sufficient_necessary_conditions_for_global_optima.htm))
+
+
+```r
+coef &lt;- lm(data = datos_simulados, formula = y ~ x)$coef
+coef
+```
+
+```
+## (Intercept)           x 
+##   -3.010961    4.333745
+```
+
+---
+
+# Modelo simple
+
+- Geometría, cálculo y álgebra lineal
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Visualización de modelos
+
+- Modelo verdadero sin error: `\(y = 3 + 4*x\)`
+- Modelo ajustado: `\(\hat{y} = -3.010961 + 4.333745x\)`
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: `\(e_i \sim \mathcal{N}(0, 10)\)`
+- Error estimado: `\(\hat{e_i} = y_i - \hat{y}_i\)`
+
+
+```
+## # A tibble: 12 x 5
+##        x     y y_estimado e_estimado      e
+##    &lt;int&gt; &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
+##  1     1 -5.07       1.32      -6.39 -12.1 
+##  2     2 13.8        5.66       8.12   2.77
+##  3     3 25.8        9.99      15.9   10.8 
+##  4     4 -4.46      14.3      -18.8  -23.5 
+##  5     5 27.3       18.7        8.63   4.29
+##  6     6 32.1       23.0        9.07   5.06
+##  7     7 25.3       27.3       -2.07  -5.75
+##  8     8 29.5       31.7       -2.13  -5.47
+##  9     9 33.4       36.0       -2.64  -5.64
+## 10    10 34.1       40.3       -6.23  -8.90
+## 11    11 42.2       44.7       -2.43  -4.77
+## 12    12 41.0       49.0       -7.98  -9.98
+```
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: `\(e_i \sim \mathcal{N}(0, 10)\)`
+- Error estimado: `\(\hat{e_i} = y_i - \hat{y}_i\)`
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-16-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Visualización de modelos
+
+- Error verdadero: `\(e_i \sim \mathcal{N}(0, 10)\)`
+- Error estimado: `\(\hat{e_i} = y_i - \hat{y}_i\)`
+
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-17-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Fórmulas y familias de modelos
+
+- R utiliza una forma de convertir las fórmulas tales como `\(y \sim x\)` en la forma de expresar los modelos, `\(y = \hat{a}_0  + \hat{a}_1x\)`
+
+
+```r
+model_matrix(data = datos_simulados, 
+             formula = y ~ x) %&gt;% 
+  slice_head(n = 4)
+```
+
+```
+## # A tibble: 4 x 2
+##   `(Intercept)`     x
+##           &lt;dbl&gt; &lt;dbl&gt;
+## 1             1     1
+## 2             1     2
+## 3             1     3
+## 4             1     4
+```
+
+`$$\begin{split}
+  y &amp; = \hat{a}_0 + \hat{a}_1x \\
+  \begin{bmatrix}
+    y_1    \\
+    \vdots \\
+    y_n
+  \end{bmatrix} &amp; = 
+  \begin{bmatrix}
+    1 &amp; x_1    \\
+    \vdots &amp; \vdots \\
+    1 &amp; x_n
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1
+  \end{bmatrix}
+  \end{split}$$`
+
+---
+
+# Fórmulas y familias de modelos
+
+- Variables categóricas: `\(y = \hat{a}_0  + \hat{a}_1x_1 + \hat{a}_2x_2 \text{ donde } x_{i2} \in [a, b]\)`
+
+
+```r
+mutate(.data = datos_simulados, 
+       tipo = c(rep("a", 10), rep("b", 10))) %&gt;% 
+  ggplot(aes(tipo, y)) + geom_point()
+```
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-19-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Fórmulas y familias de modelos
+
+- En el caso de variables categóricas estas se deben representar mediante números:
+`\(y = \hat{a}_0  + \hat{a}_1x_1 + \hat{a}_2x_2 \text{ donde } x_{i2} \in [a, b]\)`
+
+.pull-left[ 
+
+```
+## # A tibble: 4 x 3
+##   `(Intercept)`     x tipob
+##           &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1             1     1     0
+## 2             1     2     0
+## 3             1     3     0
+## 4             1     4     0
+```
+]
+
+.pull-right[ 
+
+```
+## # A tibble: 4 x 3
+##   `(Intercept)`     x tipob
+##           &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1             1    17     1
+## 2             1    18     1
+## 3             1    19     1
+## 4             1    20     1
+```
+]
+
+`$$\begin{split}
+  y &amp; = \hat{a}_0 + \hat{a}_1x_1 +  \hat{a}_2x_2  \text{ donde } x_{i2} \in [a, b] \\
+  \begin{bmatrix}
+    y_1     \\
+    y_2     \\
+    \vdots  \\
+    y_{n-1} \\
+    y_n
+  \end{bmatrix} &amp; = 
+  \begin{bmatrix}
+    1 &amp; x_{11} &amp; 0  \\
+    1 &amp; x_{21} &amp; 0  \\
+    \vdots &amp; \vdots \\
+    1 &amp; x_{n-1,1} &amp; 1 \\
+    1 &amp; x_{n,1} &amp; 1
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1    \\
+    \hat{a}_2    
+  \end{bmatrix}
+  \end{split}$$`
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas y continuas: `\(y = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2 + \text{ donde } x_{i2} \in [a, b]\)`
+
+
+```r
+model_matrix(data = datos_simulados %&gt;% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+*            formula = y ~ x*tipo) %&gt;%
+  slice_head(n = 10)
+```
+
+```
+## # A tibble: 10 x 4
+##    `(Intercept)`     x tipob `x:tipob`
+##            &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;
+##  1             1     1     0         0
+##  2             1     2     0         0
+##  3             1     3     0         0
+##  4             1     4     0         0
+##  5             1     5     0         0
+##  6             1     6     0         0
+##  7             1     7     0         0
+##  8             1     8     0         0
+##  9             1     9     0         0
+## 10             1    10     0         0
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas y continuas: `\(y = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2 + \text{ donde } x_{i2} \in [a, b]\)`
+
+
+```r
+model_matrix(data = datos_simulados %&gt;% 
+               mutate(tipo = c(rep("a", 10), rep("b", 10))), 
+*            formula = y ~ x*tipo) %&gt;%
+  slice_tail(n = 10)
+```
+
+```
+## # A tibble: 10 x 4
+##    `(Intercept)`     x tipob `x:tipob`
+##            &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;
+##  1             1    11     1        11
+##  2             1    12     1        12
+##  3             1    13     1        13
+##  4             1    14     1        14
+##  5             1    15     1        15
+##  6             1    16     1        16
+##  7             1    17     1        17
+##  8             1    18     1        18
+##  9             1    19     1        19
+## 10             1    20     1        20
+```
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas
+
+
+```r
+coef &lt;- lm(data = datos_simulados %&gt;% 
+     mutate(tipo = c(rep("a", 10), rep("b", 10))),
+*  formula =  y ~ x*tipo)$coef
+coef
+```
+
+```
+## (Intercept)           x       tipob     x:tipob 
+##    1.103585    3.648153  -21.544102    1.787899
+```
+
+
+`$$\begin{split}
+  y &amp; = \hat{a}_0 + \hat{a}_1x_1 + \hat{a}_2x_2 + \hat{a}_3x_1x_2   \text{ donde }  x_{i2} \in [a, b] \\
+  \begin{bmatrix}
+    y_1     \\
+    y_2     \\
+    \vdots  \\
+    y_{n-1} \\
+    y_n
+  \end{bmatrix} &amp; = 
+  \begin{bmatrix}
+    1 &amp; x_{11} &amp; 0 &amp; 0  \\
+    1 &amp; x_{21} &amp; 0 &amp; 0  \\
+    \vdots &amp; \vdots \\
+    1 &amp; x_{n-1,1} &amp; 1 &amp; x_{11} \\
+    1 &amp; x_{n,1} &amp; 1 &amp; x_{21}
+  \end{bmatrix}
+  \begin{bmatrix}
+    \hat{a}_0    \\
+    \hat{a}_1    \\
+    \hat{a}_2    \\
+    \hat{a}_3
+  \end{bmatrix}
+  \end{split}$$`
+
+---
+
+# Fórmulas y familias de modelos
+
+- Interacción entre variables categóricas
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-25-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Fórmulas y familias de modelos
+
+
+- Transformaciones
+
+Estima modelos como por ejemplo: `\(y = \hat{a}_0 + \hat{a}_1x + \hat{a}_2x^2 + \hat{a}_3x^3\)`
+
+
+```r
+  ggplot(data = datos_simulados, aes(x, y)) + geom_point() + 
+  geom_smooth(method = "lm", se = FALSE,
+*             formula = y ~ x + I(x^2) + I(x^3))
+```
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-26-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Fórmulas y familias de modelos
+
+- Transformaciones
+
+Estima modelos como por ejemplo: `\(y = \sum_{i=0}^{12} \hat{a}_ix^i\)`
+
+
+```r
+  ggplot(data = datos_simulados, aes(x, y)) + geom_point() + 
+  geom_smooth(method = "lm", se = FALSE,
+*             formula = y ~ poly(x, 12))
+```
+
+&lt;img src="023_modelos_conceptos_basicos_files/figure-html/unnamed-chunk-27-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Valores faltantes
+
+
+```r
+datos_simulados %&gt;%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %&gt;% 
+  slice_tail(n = 10)
+```
+
+```
+## # A tibble: 10 x 3
+##         e     x     y
+##     &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;
+##  1 -7.76     13  47.2
+##  2  0.645    14  59.6
+##  3  9.59     15  72.6
+##  4 -1.10     16  65.9
+##  5 -5.11     17  65.9
+##  6 -9.11     18  65.9
+##  7 -8.37     19  70.6
+##  8 24.2      20 107. 
+##  9 NA        21  NA  
+## 10 NA        22  NA
+```
+
+
+---
+# Valores faltantes
+
+- R elimina todas las filas con valores faltantes de forma silenciosa
+
+
+```r
+datos_simulados %&gt;%
+* bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %&gt;%
+  lm(data = ., formula = y ~ x) %&gt;% 
+  .$coef
+```
+
+```
+## (Intercept)           x 
+##   -3.010961    4.333745
+```
+
+
+```r
+datos_simulados %&gt;%
+  lm(data = ., formula = y ~ x) %&gt;% 
+  .$coef
+```
+
+```
+## (Intercept)           x 
+##   -3.010961    4.333745
+```
+
+---
+
+# Valores faltantes
+
+- De todas maneras es posible verificar el número de observaciones utilizadas para estimar el modelo
+
+
+```r
+datos_simulados %&gt;%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %&gt;% 
+  lm(data = ., formula = y ~ x) %&gt;% 
+* nobs()
+```
+
+```
+## [1] 20
+```
+
+- De esa manera se puede comparar con el número de filas que la tabla rectangular que contenga los datos
+
+
+```r
+datos_simulados %&gt;%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %&gt;% 
+  nrow()
+```
+
+```
+## [1] 22
+```
+
+---
+
+# Valores faltantes
+
+- Otra alternativa es utilizar `broom::glance` que incorpora `nobs` dentro del reporte de información de todo el modelo
+
+
+```r
+datos_simulados %&gt;%
+  bind_rows(tibble(e = c(NA, NA), x = 21:22, y = e)) %&gt;% 
+  lm(data = ., formula = y ~ x) %&gt;% 
+* broom::glance() %&gt;%
+* select(1:5, nobs)
+```
+
+```
+## # A tibble: 1 x 6
+##   r.squared adj.r.squared sigma statistic       p.value  nobs
+##       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt; &lt;int&gt;
+## 1     0.869         0.862  10.2      120. 0.00000000221    20
+```
+
+---
+
+# References
+
+Grolemund, G. and H. Wickham (2019). _R para Ciencia de Datos_. URL:
+[http://es.r4ds.hadley.nz/](http://es.r4ds.hadley.nz/) (visited on Jan.
+06, 2021).
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
