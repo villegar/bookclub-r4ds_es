@@ -1,0 +1,478 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 24: Construcción de modelos"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2020-06-15
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+library(tidyverse)
+set.seed(1)
+```
+
+## Contenidos
+
+* 24.1 Introducción
+
+* 24.2 ¿Por qué los diamantes de baja calidad son más caros?
+
+* 24.3 ¿Qué afecta el número de vuelos diarios?
+
+* 24.4 Aprende más sobre los modelos
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este capítulo, los siguientes paquetes tienen 
+que ser instalados:
+
+```{r, eval = FALSE}
+library(tidyverse)
+library(modelr)
+library(lubridate)
+library(datos)
+```
+
+```{r, include = FALSE}
+library(tidyverse)
+library(modelr)
+library(lubridate)
+library(datos)
+```
+
+<!-- --- -->
+
+<!-- ## 24.1 Introducción -->
+
+---
+
+## 24.2 ¿Por qué los diamantes de baja calidad son más caros?
+
+```{r, fig.height = 3, dpi = 300}
+ggplot(diamantes, aes(corte, precio)) + geom_boxplot()
+```
+
+---
+
+```{r, fig.height = 3, dpi = 300}
+ggplot(diamantes, aes(color, precio)) + geom_boxplot()
+```
+
+---
+
+```{r, fig.height = 3, dpi = 300}
+ggplot(diamantes, aes(claridad, precio)) + geom_boxplot()
+```
+
+---
+
+### 24.2.1 Precio y quilates
+
+```{r, fig.height = 3.5, dpi = 300}
+ggplot(diamantes, aes(quilate, precio)) + 
+  geom_hex(bins = 50)
+```
+
+---
+
+### 24.2.1 Precio y quilates(2)
+
+```{r, fig.height = 3.5, dpi = 300}
+diamantes2 <- diamantes %>%
+  filter(quilate <= 2.5) %>% 
+  mutate(log_precio = log2(precio), log_quilates = log2(quilate))
+
+ggplot(diamantes2, aes(log_quilates, log_precio)) + 
+  geom_hex(bins = 50)
+```
+
+---
+
+### 24.2.1 Precio y quilates (3)
+
+```{r}
+mod_diamantes <- lm(log_precio ~ log_quilates, data = diamantes2)
+
+cuadricula <- diamantes2 %>% 
+  data_grid(quilate = seq_range(quilate, 20)) %>% 
+  mutate(log_quilates = log2(quilate)) %>% 
+  add_predictions(mod_diamantes, "log_precio") %>% 
+  mutate(precio = 2 ^ log_precio)
+```
+
+---
+
+```{r, fig.height = 4, dpi = 300}
+ggplot(diamantes2, aes(quilate, precio)) + 
+  geom_hex(bins = 50) + 
+  geom_line(data = cuadricula, colour = "red", size = 1)
+```
+
+
+---
+
+### 24.2.1 Precio y quilates (4)
+
+```{r, fig.height = 4, dpi = 300}
+diamantes2 <- diamantes2 %>% 
+  add_residuals(mod_diamantes, "lresid")
+
+ggplot(diamantes2, aes(log_quilates, lresid)) + 
+  geom_hex(bins = 50)
+```
+
+
+---
+
+### 24.2.1 Precio y quilates (5)
+
+```{r, fig.height = 4, dpi = 300, echo = TRUE}
+ggplot(diamantes2, aes(corte, lresid)) + geom_boxplot()
+```
+
+---
+
+### 24.2.1 Precio y quilates (6)
+
+```{r, fig.height = 4, dpi = 300, echo = TRUE}
+ggplot(diamantes2, aes(color, lresid)) + geom_boxplot()
+```
+
+---
+
+### 24.2.1 Precio y quilates (7)
+
+```{r, fig.height = 4, dpi = 300}
+ggplot(diamantes2, aes(claridad, lresid)) + geom_boxplot()
+```
+
+---
+
+### 24.2.2 Un modelo más complicado
+
+```{r}
+mod_diamantes2 <- lm(log_precio ~ log_quilates + color + corte + claridad, data = diamantes2)
+cuadricula <- diamantes2 %>% 
+  data_grid(corte, .model = mod_diamantes2) %>% 
+  add_predictions(mod_diamantes2)
+cuadricula
+```
+
+---
+
+### 24.2.2 Un modelo más complicado (2)
+
+```{r, fig.height = 4, dpi = 300}
+ggplot(cuadricula, aes(corte, pred)) + 
+  geom_point()
+```
+
+---
+
+### 24.2.2 Un modelo más complicado (3)
+
+```{r, fig.height = 4, dpi = 300}
+diamantes2 <- diamantes2 %>% 
+  add_residuals(mod_diamantes2, "lresid2")
+
+ggplot(diamantes2, aes(log_quilates, lresid2)) + 
+  geom_hex(bins = 50)
+```
+
+---
+
+### 24.2.2 Un modelo más complicado (4)
+
+```{r}
+diamantes2 %>% 
+  filter(abs(lresid2) > 1) %>% 
+  add_predictions(mod_diamantes2) %>% 
+  mutate(pred = round(2 ^ pred)) %>% 
+  select(precio, pred, quilate:tabla, x:z) %>% 
+  arrange(precio)
+```
+
+---
+
+### 24.2.3 Ejercicios
+1. En el gráfico de `log_quilates` vs. `log_precio`, hay unas tiras verticales brillantes. ¿Qué representan?
+
+2. Si `log(precio) = a_0 + a_1 * log(quilates)`, ¿Qué dice eso acerca
+la relación entre `precio` y `quilates`?
+
+3. Extrae los diamantes que tienen residuos muy altos y muy bajos. ¿Hay algo inusual en estos diamantes? ¿Son particularmente malos o buenos?, o ¿Crees que estos son errores de precio?
+
+4. ¿El modelo final, `mod_diamantes2`, hace un buen trabajo al predecir el precios de los diamantes? ¿Confiarías en lo que te indique gastar si fueras a comprar un diamante?
+
+---
+
+## 24.3 ¿Qué afecta el número de vuelos diarios?
+
+```{r}
+vuelos_por_dia <- vuelos %>% 
+  mutate(fecha = make_date(anio, mes, dia)) %>% 
+  group_by(fecha) %>% 
+  summarise(n = n())
+vuelos_por_dia
+```
+
+---
+
+```{r, fig.height = 4, dpi = 300}
+ggplot(vuelos_por_dia, aes(fecha, n)) + 
+  geom_line()
+```
+
+---
+
+### 24.3.1 Día de la semana
+
+```{r, fig.height = 3, dpi = 300}
+vuelos_por_dia <- vuelos_por_dia %>% 
+  mutate(dia_semana = wday(fecha, label = TRUE))
+ggplot(vuelos_por_dia, aes(dia_semana, n)) + 
+  geom_boxplot()
+```
+
+---
+
+### 24.3.1 Día de la semana (2)
+
+```{r, fig.height = 3, dpi = 300}
+mod <- lm(n ~ dia_semana, data = vuelos_por_dia)
+
+cuadricula <- vuelos_por_dia %>% 
+  data_grid(dia_semana) %>% 
+  add_predictions(mod, "n")
+
+ggplot(vuelos_por_dia, aes(dia_semana, n)) + 
+  geom_boxplot() +
+  geom_point(data = cuadricula, colour = "red", size = 4)
+```
+
+---
+
+### 24.3.1 Día de la semana (3)
+
+```{r, fig.height = 3, dpi = 300}
+vuelos_por_dia <- vuelos_por_dia %>% 
+  add_residuals(mod)
+vuelos_por_dia %>% 
+  ggplot(aes(fecha, resid)) + 
+  geom_ref_line(h = 0) + 
+  geom_line()
+```
+
+---
+
+### 24.3.1 Día de la semana (4)
+
+```{r, fig.height = 4, dpi = 300}
+ggplot(vuelos_por_dia, aes(fecha, resid, colour = dia_semana)) + 
+  geom_ref_line(h = 0) + 
+  geom_line()
+```
+
+---
+
+### 24.3.1 Día de la semana (5)
+
+```{r}
+vuelos_por_dia %>% 
+  filter(resid < -100)
+```
+
+---
+
+### 24.3.1 Día de la semana (6)
+
+```{r, fig.height = 3, dpi = 300}
+vuelos_por_dia %>% 
+  ggplot(aes(fecha, resid)) + 
+  geom_ref_line(h = 0) + 
+  geom_line(colour = "grey50") + 
+  geom_smooth(se = FALSE, span = 0.20)
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado
+
+```{r, fig.height = 3, dpi = 300}
+vuelos_por_dia %>% 
+  filter(dia_semana == "Sat") %>% 
+  ggplot(aes(fecha, n)) + 
+    geom_point() + 
+    geom_line() +
+    scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado (2)
+
+```{r}
+trimestre <- function(fecha) {
+  cut(fecha, 
+    breaks = ymd(20130101, 20130605, 20130825, 20140101),
+    labels = c("primavera", "verano", "otoño")
+  )
+}
+
+vuelos_por_dia <- vuelos_por_dia %>% 
+  mutate(trimestre = trimestre(fecha)) 
+```
+
+---
+
+```{r, fig.height = 4, dpi = 300}
+vuelos_por_dia %>% 
+  filter(dia_semana == "Sat") %>% 
+  ggplot(aes(fecha, n, colour = trimestre)) +
+  geom_point(alpha = 1/3) + 
+  geom_line() +
+  scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado (3)
+
+```{r, fig.height = 4, dpi = 300}
+vuelos_por_dia %>% 
+  ggplot(aes(dia_semana, n, colour = trimestre)) +
+    geom_boxplot()
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado (4)
+
+```{r, fig.height = 3, dpi = 300}
+mod1 <- lm(n ~ dia_semana, data = vuelos_por_dia)
+mod2 <- lm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+
+vuelos_por_dia %>% 
+  gather_residuals(sin_trimestre = mod1, con_trimestre = mod2) %>% 
+  ggplot(aes(fecha, resid, colour = model)) +
+    geom_line(alpha = 0.75)
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado (5)
+
+```{r, fig.height = 3, dpi = 300}
+cuadricula <- vuelos_por_dia %>% 
+  data_grid(dia_semana, trimestre) %>% 
+  add_predictions(mod2, "n")
+
+ggplot(vuelos_por_dia, aes(dia_semana, n)) +
+  geom_boxplot() + 
+  geom_point(data = cuadricula, colour = "red") + 
+  facet_wrap(~ trimestre)
+```
+
+---
+
+### 24.3.2 Efecto estacional del sábado (6)
+
+```{r, fig.height = 3, dpi = 300}
+mod3 <- MASS::rlm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+
+vuelos_por_dia %>% 
+  add_residuals(mod3, "resid") %>% 
+  ggplot(aes(fecha, resid)) + 
+  geom_hline(yintercept = 0, size = 2, colour = "white") + 
+  geom_line()
+```
+
+---
+
+### 24.3.3 Variables calculadas
+
+```{r}
+compute_vars <- function(data) {
+  data %>% 
+    mutate(
+      trimestre = trimestre(date), 
+      dia_semana = wday(date, label = TRUE)
+    )
+}
+```
+
+```{r}
+dia_semana2 <- function(x) wday(x, label = TRUE)
+mod3 <- lm(n ~ dia_semana2(fecha) * trimestre(fecha), data = vuelos_por_dia)
+```
+
+---
+
+### 24.3.4 Época del año: un enfoque alternativo
+
+```{r, fig.height = 3, dpi = 300}
+library(splines)
+mod <- MASS::rlm(n ~ dia_semana * ns(fecha, 5), data = vuelos_por_dia)
+
+vuelos_por_dia %>% 
+  data_grid(dia_semana, fecha = seq_range(fecha, n = 13)) %>% 
+  add_predictions(mod) %>% 
+  ggplot(aes(fecha, pred, colour = dia_semana)) + 
+    geom_line() +
+    geom_point()
+```
+
+---
+
+### 24.3.5 Ejercicios
+1. Usa tus habilidades detestivescas con los buscadores para intercambiar ideas sobre por qué hubo menos vuelos esperados el 20 de enero, 26 de mayo y 1 de septiembre. (Pista: todos tienen la misma explicación.) ¿Cómo generalizarías esos días a otros años?
+
+2. ¿Qué representan esos tres días con altos residuos positivos? ¿Cómo se generalizarían esos días a otros años?
+
+```{r}
+vuelos_por_dia %>% 
+  slice_max(n = 3, resid)
+```
+
+3. Crea una nueva variable que divida la variable `dia_semana` en periodos, pero sólo para sábados, es decir, debería tener `Thu`, `Fri`, y `Sat-verano`, `Sat-primavera`, `Sat-otonio`. ¿Cómo este modelo se compara con el modelo que tiene la combinación de `dia_semana` y `trimestre`?
+
+4. Crea una nueva variable `dia_semana` que combina el día de la semana, periodos (para sábados), y feriados públicos. ¿Cómo se ven los residuos de este modelo?
+
+5. ¿Qué sucede si ajustas un efecto de día de la semana que varía según el mes o varía mes a mes (es decir, `n ~ dia_semana * month`)? ¿Por qué esto no es muy útil?
+
+6. ¿Que esperarías del modelo `n ~ dia_semana + ns(fecha, 5)`? Sabiendo lo que sabes sobre los datos, ¿porqué esperarias que no sea particularmente efectivo?
+
+7. Presumimos que las personas que salen los domingos son probablemente viajeros de negocios quienes necesitan estar en algun lugar el lunes. Explora esa hipótesis al ver cómo se descompone en función de la distancia y tiempo: si es verdad, esperarías ver más vuelos en la tarde del domingo a lugares que estan muy lejos.
+
+8. Es un poco frustante que el domingo y sábado esté en los extremos opuestos del gráfico. Escribe una pequeña función para establecer los niveles del factor para que la semana comience el lunes.
+
+---
+
+## 24.4 Aprende más sobre los modelos
+
+- __Statistical Modeling: A Fresh Approach__ by Danny Kaplan, http://project-mosaic-books.com/?page_id=13. Este libro provee una introducción suave al modelado, donde desarrollas tu intuición, herramientas matemáticas, y habilidades de R en paralelo. El libro reemplaza al curso tradicional de “Introducción a la Estadística”, proporcionando un plan de estudios actualizado y relevante para ciencia de datos.
+
+- __An Introduction to Statistical Learning__ by Gareth James, Daniela Witten, Trevor Hastie, and Robert Tibshirani, http://www-bcf.usc.edu/~gareth/ISL/ (Disponible en línea gratis). Este libro presenta una moderna familia de técnicas de modelamiento colectivamente conocidas como aprendizaje estadístico. Para una más profunda comprensión de la matemática detrás de los modelos, lee el clásico Elements of Statistical Learning por Trevor Hastie, Robert Tibshirani, y Jerome Friedman, http://statweb.stanford.edu/~tibs/ElemStatLearn/ (También disponible en línea gratis).
+
+- __Applied Predictive Modeling__ por Max Kuhn and Kjell Johnson, http://appliedpredictivemodeling.com. Este libro es un compañero del paquete `caret` y provee herramientas prácticas para lidiar con desafíos de modelado predictivo.
+---
+
+class: center, inverse, middle
+
+# ¿Preguntas?

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R para Ciencia de Datos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Roberto Villegas-Diaz (GH: villegar)" />
+    <meta name="date" content="2020-06-15" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R para Ciencia de Datos
+## Capítulo 24: Construcción de modelos
+### Roberto Villegas-Diaz (GH: villegar)
+### 2020-06-15
+
+---
+
+
+
+
+
+## Contenidos
+
+* 24.1 Introducción
+
+* 24.2 ¿Por qué los diamantes de baja calidad son más caros?
+
+* 24.3 ¿Qué afecta el número de vuelos diarios?
+
+* 24.4 Aprende más sobre los modelos
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este capítulo, los siguientes paquetes tienen 
+que ser instalados:
+
+
+```r
+library(tidyverse)
+library(modelr)
+library(lubridate)
+library(datos)
+```
+
+
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 24.1 Introducción --&gt;
+
+---
+
+## 24.2 ¿Por qué los diamantes de baja calidad son más caros?
+
+
+```r
+ggplot(diamantes, aes(corte, precio)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+
+```r
+ggplot(diamantes, aes(color, precio)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+---
+
+
+```r
+ggplot(diamantes, aes(claridad, precio)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.1 Precio y quilates
+
+
+```r
+ggplot(diamantes, aes(quilate, precio)) + 
+  geom_hex(bins = 50)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.1 Precio y quilates(2)
+
+
+```r
+diamantes2 &lt;- diamantes %&gt;%
+  filter(quilate &lt;= 2.5) %&gt;% 
+  mutate(log_precio = log2(precio), log_quilates = log2(quilate))
+
+ggplot(diamantes2, aes(log_quilates, log_precio)) + 
+  geom_hex(bins = 50)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.1 Precio y quilates (3)
+
+
+```r
+mod_diamantes &lt;- lm(log_precio ~ log_quilates, data = diamantes2)
+
+cuadricula &lt;- diamantes2 %&gt;% 
+  data_grid(quilate = seq_range(quilate, 20)) %&gt;% 
+  mutate(log_quilates = log2(quilate)) %&gt;% 
+  add_predictions(mod_diamantes, "log_precio") %&gt;% 
+  mutate(precio = 2 ^ log_precio)
+```
+
+---
+
+
+```r
+ggplot(diamantes2, aes(quilate, precio)) + 
+  geom_hex(bins = 50) + 
+  geom_line(data = cuadricula, colour = "red", size = 1)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+
+
+---
+
+### 24.2.1 Precio y quilates (4)
+
+
+```r
+diamantes2 &lt;- diamantes2 %&gt;% 
+  add_residuals(mod_diamantes, "lresid")
+
+ggplot(diamantes2, aes(log_quilates, lresid)) + 
+  geom_hex(bins = 50)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+
+
+---
+
+### 24.2.1 Precio y quilates (5)
+
+
+```r
+ggplot(diamantes2, aes(corte, lresid)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.1 Precio y quilates (6)
+
+
+```r
+ggplot(diamantes2, aes(color, lresid)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.1 Precio y quilates (7)
+
+
+```r
+ggplot(diamantes2, aes(claridad, lresid)) + geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.2 Un modelo más complicado
+
+
+```r
+mod_diamantes2 &lt;- lm(log_precio ~ log_quilates + color + corte + claridad, data = diamantes2)
+cuadricula &lt;- diamantes2 %&gt;% 
+  data_grid(corte, .model = mod_diamantes2) %&gt;% 
+  add_predictions(mod_diamantes2)
+cuadricula
+```
+
+```
+## # A tibble: 5 x 5
+##   corte     log_quilates color claridad  pred
+##   &lt;ord&gt;            &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;
+## 1 Regular         -0.515 G     VS2       11.2
+## 2 Bueno           -0.515 G     VS2       11.3
+## 3 Muy bueno       -0.515 G     VS2       11.4
+## 4 Premium         -0.515 G     VS2       11.4
+## 5 Ideal           -0.515 G     VS2       11.4
+```
+
+---
+
+### 24.2.2 Un modelo más complicado (2)
+
+
+```r
+ggplot(cuadricula, aes(corte, pred)) + 
+  geom_point()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.2 Un modelo más complicado (3)
+
+
+```r
+diamantes2 &lt;- diamantes2 %&gt;% 
+  add_residuals(mod_diamantes2, "lresid2")
+
+ggplot(diamantes2, aes(log_quilates, lresid2)) + 
+  geom_hex(bins = 50)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.2.2 Un modelo más complicado (4)
+
+
+```r
+diamantes2 %&gt;% 
+  filter(abs(lresid2) &gt; 1) %&gt;% 
+  add_predictions(mod_diamantes2) %&gt;% 
+  mutate(pred = round(2 ^ pred)) %&gt;% 
+  select(precio, pred, quilate:tabla, x:z) %&gt;% 
+  arrange(precio)
+```
+
+```
+## # A tibble: 16 x 11
+##    precio  pred quilate corte color claridad profundidad tabla     x     y     z
+##     &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;ord&gt; &lt;ord&gt; &lt;ord&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1   1013   264   0.25  Regu… F     SI2             54.4    64  4.3   4.23  2.32
+##  2   1186   284   0.25  Prem… G     SI2             59      60  5.33  5.28  3.12
+##  3   1186   284   0.25  Prem… G     SI2             58.8    60  5.33  5.28  3.12
+##  4   1262  2644   1.03  Regu… E     I1              78.2    54  5.72  5.59  4.42
+##  5   1415   639   0.35  Regu… G     VS2             65.9    54  5.57  5.53  3.66
+##  6   1415   639   0.35  Regu… G     VS2             65.9    54  5.57  5.53  3.66
+##  7   1715   576   0.32  Regu… F     VS2             59.6    60  4.42  4.34  2.61
+##  8   1776   412   0.290 Regu… F     SI1             55.8    60  4.48  4.41  2.48
+##  9   2160   314   0.34  Regu… F     I1              55.8    62  4.72  4.6   2.6 
+## 10   2366   774   0.3   Muy … D     VVS2            60.6    58  4.33  4.35  2.63
+## 11   3360  1373   0.51  Prem… F     SI1             62.7    62  5.09  4.96  3.15
+## 12   3807  1540   0.61  Bueno F     SI2             62.5    65  5.36  5.29  3.33
+## 13   3920  1705   0.51  Regu… F     VVS2            65.4    60  4.98  4.9   3.23
+## 14   4368  1705   0.51  Regu… F     VVS2            60.7    66  5.21  5.11  3.13
+## 15  10011  4048   1.01  Regu… D     SI2             64.6    58  6.25  6.2   4.02
+## 16  10470 23622   2.46  Prem… E     SI2             59.7    59  8.82  8.76  5.25
+```
+
+---
+
+### 24.2.3 Ejercicios
+1. En el gráfico de `log_quilates` vs. `log_precio`, hay unas tiras verticales brillantes. ¿Qué representan?
+
+2. Si `log(precio) = a_0 + a_1 * log(quilates)`, ¿Qué dice eso acerca
+la relación entre `precio` y `quilates`?
+
+3. Extrae los diamantes que tienen residuos muy altos y muy bajos. ¿Hay algo inusual en estos diamantes? ¿Son particularmente malos o buenos?, o ¿Crees que estos son errores de precio?
+
+4. ¿El modelo final, `mod_diamantes2`, hace un buen trabajo al predecir el precios de los diamantes? ¿Confiarías en lo que te indique gastar si fueras a comprar un diamante?
+
+---
+
+## 24.3 ¿Qué afecta el número de vuelos diarios?
+
+
+```r
+vuelos_por_dia &lt;- vuelos %&gt;% 
+  mutate(fecha = make_date(anio, mes, dia)) %&gt;% 
+  group_by(fecha) %&gt;% 
+  summarise(n = n())
+vuelos_por_dia
+```
+
+```
+## # A tibble: 365 x 2
+##    fecha          n
+##  * &lt;date&gt;     &lt;int&gt;
+##  1 2013-01-01   842
+##  2 2013-01-02   943
+##  3 2013-01-03   914
+##  4 2013-01-04   915
+##  5 2013-01-05   720
+##  6 2013-01-06   832
+##  7 2013-01-07   933
+##  8 2013-01-08   899
+##  9 2013-01-09   902
+## 10 2013-01-10   932
+## # … with 355 more rows
+```
+
+---
+
+
+```r
+ggplot(vuelos_por_dia, aes(fecha, n)) + 
+  geom_line()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.1 Día de la semana
+
+
+```r
+vuelos_por_dia &lt;- vuelos_por_dia %&gt;% 
+  mutate(dia_semana = wday(fecha, label = TRUE))
+ggplot(vuelos_por_dia, aes(dia_semana, n)) + 
+  geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.1 Día de la semana (2)
+
+
+```r
+mod &lt;- lm(n ~ dia_semana, data = vuelos_por_dia)
+
+cuadricula &lt;- vuelos_por_dia %&gt;% 
+  data_grid(dia_semana) %&gt;% 
+  add_predictions(mod, "n")
+
+ggplot(vuelos_por_dia, aes(dia_semana, n)) + 
+  geom_boxplot() +
+  geom_point(data = cuadricula, colour = "red", size = 4)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.1 Día de la semana (3)
+
+
+```r
+vuelos_por_dia &lt;- vuelos_por_dia %&gt;% 
+  add_residuals(mod)
+vuelos_por_dia %&gt;% 
+  ggplot(aes(fecha, resid)) + 
+  geom_ref_line(h = 0) + 
+  geom_line()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-22-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.1 Día de la semana (4)
+
+
+```r
+ggplot(vuelos_por_dia, aes(fecha, resid, colour = dia_semana)) + 
+  geom_ref_line(h = 0) + 
+  geom_line()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.1 Día de la semana (5)
+
+
+```r
+vuelos_por_dia %&gt;% 
+  filter(resid &lt; -100)
+```
+
+```
+## # A tibble: 11 x 4
+##    fecha          n dia_semana resid
+##    &lt;date&gt;     &lt;int&gt; &lt;ord&gt;      &lt;dbl&gt;
+##  1 2013-01-01   842 Tue        -109.
+##  2 2013-01-20   786 Sun        -105.
+##  3 2013-05-26   729 Sun        -162.
+##  4 2013-07-04   737 Thu        -229.
+##  5 2013-07-05   822 Fri        -145.
+##  6 2013-09-01   718 Sun        -173.
+##  7 2013-11-28   634 Thu        -332.
+##  8 2013-11-29   661 Fri        -306.
+##  9 2013-12-24   761 Tue        -190.
+## 10 2013-12-25   719 Wed        -244.
+## 11 2013-12-31   776 Tue        -175.
+```
+
+---
+
+### 24.3.1 Día de la semana (6)
+
+
+```r
+vuelos_por_dia %&gt;% 
+  ggplot(aes(fecha, resid)) + 
+  geom_ref_line(h = 0) + 
+  geom_line(colour = "grey50") + 
+  geom_smooth(se = FALSE, span = 0.20)
+```
+
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado
+
+
+```r
+vuelos_por_dia %&gt;% 
+  filter(dia_semana == "Sat") %&gt;% 
+  ggplot(aes(fecha, n)) + 
+    geom_point() + 
+    geom_line() +
+    scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-26-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado (2)
+
+
+```r
+trimestre &lt;- function(fecha) {
+  cut(fecha, 
+    breaks = ymd(20130101, 20130605, 20130825, 20140101),
+    labels = c("primavera", "verano", "otoño")
+  )
+}
+
+vuelos_por_dia &lt;- vuelos_por_dia %&gt;% 
+  mutate(trimestre = trimestre(fecha)) 
+```
+
+---
+
+
+```r
+vuelos_por_dia %&gt;% 
+  filter(dia_semana == "Sat") %&gt;% 
+  ggplot(aes(fecha, n, colour = trimestre)) +
+  geom_point(alpha = 1/3) + 
+  geom_line() +
+  scale_x_date(NULL, date_breaks = "1 month", date_labels = "%b")
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado (3)
+
+
+```r
+vuelos_por_dia %&gt;% 
+  ggplot(aes(dia_semana, n, colour = trimestre)) +
+    geom_boxplot()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado (4)
+
+
+```r
+mod1 &lt;- lm(n ~ dia_semana, data = vuelos_por_dia)
+mod2 &lt;- lm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+
+vuelos_por_dia %&gt;% 
+  gather_residuals(sin_trimestre = mod1, con_trimestre = mod2) %&gt;% 
+  ggplot(aes(fecha, resid, colour = model)) +
+    geom_line(alpha = 0.75)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-30-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado (5)
+
+
+```r
+cuadricula &lt;- vuelos_por_dia %&gt;% 
+  data_grid(dia_semana, trimestre) %&gt;% 
+  add_predictions(mod2, "n")
+
+ggplot(vuelos_por_dia, aes(dia_semana, n)) +
+  geom_boxplot() + 
+  geom_point(data = cuadricula, colour = "red") + 
+  facet_wrap(~ trimestre)
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.2 Efecto estacional del sábado (6)
+
+
+```r
+mod3 &lt;- MASS::rlm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+
+vuelos_por_dia %&gt;% 
+  add_residuals(mod3, "resid") %&gt;% 
+  ggplot(aes(fecha, resid)) + 
+  geom_hline(yintercept = 0, size = 2, colour = "white") + 
+  geom_line()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-32-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.3 Variables calculadas
+
+
+```r
+compute_vars &lt;- function(data) {
+  data %&gt;% 
+    mutate(
+      trimestre = trimestre(date), 
+      dia_semana = wday(date, label = TRUE)
+    )
+}
+```
+
+
+```r
+dia_semana2 &lt;- function(x) wday(x, label = TRUE)
+mod3 &lt;- lm(n ~ dia_semana2(fecha) * trimestre(fecha), data = vuelos_por_dia)
+```
+
+---
+
+### 24.3.4 Época del año: un enfoque alternativo
+
+
+```r
+library(splines)
+mod &lt;- MASS::rlm(n ~ dia_semana * ns(fecha, 5), data = vuelos_por_dia)
+
+vuelos_por_dia %&gt;% 
+  data_grid(dia_semana, fecha = seq_range(fecha, n = 13)) %&gt;% 
+  add_predictions(mod) %&gt;% 
+  ggplot(aes(fecha, pred, colour = dia_semana)) + 
+    geom_line() +
+    geom_point()
+```
+
+![](Capitulo24_files/figure-html/unnamed-chunk-35-1.png)&lt;!-- --&gt;
+
+---
+
+### 24.3.5 Ejercicios
+1. Usa tus habilidades detestivescas con los buscadores para intercambiar ideas sobre por qué hubo menos vuelos esperados el 20 de enero, 26 de mayo y 1 de septiembre. (Pista: todos tienen la misma explicación.) ¿Cómo generalizarías esos días a otros años?
+
+2. ¿Qué representan esos tres días con altos residuos positivos? ¿Cómo se generalizarían esos días a otros años?
+
+
+```r
+vuelos_por_dia %&gt;% 
+  slice_max(n = 3, resid)
+```
+
+```
+## # A tibble: 3 x 5
+##   fecha          n dia_semana resid trimestre
+##   &lt;date&gt;     &lt;int&gt; &lt;ord&gt;      &lt;dbl&gt; &lt;fct&gt;    
+## 1 2013-11-30   857 Sat        112.  otoño    
+## 2 2013-12-01   987 Sun         95.5 otoño    
+## 3 2013-12-28   814 Sat         69.4 otoño
+```
+
+3. Crea una nueva variable que divida la variable `dia_semana` en periodos, pero sólo para sábados, es decir, debería tener `Thu`, `Fri`, y `Sat-verano`, `Sat-primavera`, `Sat-otonio`. ¿Cómo este modelo se compara con el modelo que tiene la combinación de `dia_semana` y `trimestre`?
+
+4. Crea una nueva variable `dia_semana` que combina el día de la semana, periodos (para sábados), y feriados públicos. ¿Cómo se ven los residuos de este modelo?
+
+5. ¿Qué sucede si ajustas un efecto de día de la semana que varía según el mes o varía mes a mes (es decir, `n ~ dia_semana * month`)? ¿Por qué esto no es muy útil?
+
+6. ¿Que esperarías del modelo `n ~ dia_semana + ns(fecha, 5)`? Sabiendo lo que sabes sobre los datos, ¿porqué esperarias que no sea particularmente efectivo?
+
+7. Presumimos que las personas que salen los domingos son probablemente viajeros de negocios quienes necesitan estar en algun lugar el lunes. Explora esa hipótesis al ver cómo se descompone en función de la distancia y tiempo: si es verdad, esperarías ver más vuelos en la tarde del domingo a lugares que estan muy lejos.
+
+8. Es un poco frustante que el domingo y sábado esté en los extremos opuestos del gráfico. Escribe una pequeña función para establecer los niveles del factor para que la semana comience el lunes.
+
+---
+
+## 24.4 Aprende más sobre los modelos
+
+- __Statistical Modeling: A Fresh Approach__ by Danny Kaplan, http://project-mosaic-books.com/?page_id=13. Este libro provee una introducción suave al modelado, donde desarrollas tu intuición, herramientas matemáticas, y habilidades de R en paralelo. El libro reemplaza al curso tradicional de “Introducción a la Estadística”, proporcionando un plan de estudios actualizado y relevante para ciencia de datos.
+
+- __An Introduction to Statistical Learning__ by Gareth James, Daniela Witten, Trevor Hastie, and Robert Tibshirani, http://www-bcf.usc.edu/~gareth/ISL/ (Disponible en línea gratis). Este libro presenta una moderna familia de técnicas de modelamiento colectivamente conocidas como aprendizaje estadístico. Para una más profunda comprensión de la matemática detrás de los modelos, lee el clásico Elements of Statistical Learning por Trevor Hastie, Robert Tibshirani, y Jerome Friedman, http://statweb.stanford.edu/~tibs/ElemStatLearn/ (También disponible en línea gratis).
+
+- __Applied Predictive Modeling__ por Max Kuhn and Kjell Johnson, http://appliedpredictivemodeling.com. Este libro es un compañero del paquete `caret` y provee herramientas prácticas para lidiar con desafíos de modelado predictivo.
+---
+
+class: center, inverse, middle
+
+# ¿Preguntas?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+<style>
+.logo {
+  background-image: url(https://es.r4ds.hadley.nz/hex_r4ds-es.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  width: 110px;
+  height: 128px;
+  z-index: 0;
+}
+</style>
+
+<script>
+document
+  .querySelectorAll(
+    '.remark-slide-content' +
+    ':not(.title-slide)' +
+    // add additional classes to exclude here, e.g.
+    ':not(.inverse)' +
+    ':not(.hide-logo)'
+  )
+  .forEach(el => {
+    el.innerHTML += '<div class="logo"></div>';
+  });
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
