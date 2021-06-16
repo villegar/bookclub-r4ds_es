@@ -1,0 +1,348 @@
+---
+title: "Iteración"
+subtitle: "R para ciencia de datos<br>Club de lectura<br>Capítulo 21<br>"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-05-04 16:35:43 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo      = TRUE, 
+                      fig.align = "center")
+```
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(datos)
+library(xaringan)
+library(RefManageR)
+```
+
+```{r load_references, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style     = "authoryear",
+  cite.style    = "authoryear",
+  style         = "markdown",
+  hyperlink     = FALSE,
+  dashed        = FALSE
+)
+
+mybib <- RefManageR::ReadBib(file  = "./R_for_data_science.bib",
+                             check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(mybib, "grolemund_r_2019")` Cap. 21** se abarcará:
+
+--
+
+- El uso de la iteración para reducir la duplicación de código como complemento al uso de funciones
+- El uso de 2 paradigmas de iteración:
+
+    + Programación imperativa utilizando base R
+    + Programación funcional utilizando el paquete `purrr`<sup>1</sup>
+    
+.footnote[
+[1] Ver la [cheat sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/master/purrr.pdf) para una referencia rápida
+]
+
+---
+
+# Bucles *for*
+
+--
+
+```{r eval=FALSE}
+x <- vector(<mode>, <length>) # output 
+for (variable in vector) {    # secuencia
+    # Cuerpo
+}
+```
+
+--
+
+- **Output**: se asigna un espacio para la salidad definiendo de manera explícita el espacio para realizar el proceso de manera más eficiente
+
+- **Secuencia**: en esta parte se especifica sobre lo que se quiere iterar 
+
+- **Cuerpo**: en esta parte se describe el código que se busca ejecutar de manera repetitiva
+
+---
+
+# Variaciones de bucles *for*
+
+- Modificar un objeto existente
+- Iterar sobre nombres o valores
+- Manejar outputs de longitud desconocida
+- Manejar secuencias de longitud desconocida
+
+---
+
+# Variaciones de bucles *for*
+
+## Modificar un objeto existente
+
+```{r}
+tbl <- tibble(x = 1:4)
+min_val <- min(tbl$x)
+max_val <- max(tbl$x)
+
+for (i in 1:nrow(tbl)) {
+  tbl$x[[i]] <- (tbl$x[[i]] - min_val) / 
+                 (max_val - min_val)   
+}
+
+tbl
+```
+
+---
+
+# Variaciones de bucles *for*
+
+## Longitud de output desconocida
+
+```{r}
+# Generar 3 vectores con una longitud aleatoria
+lst <- vector(mode = "list", length = 3L)
+for (i in seq_along(lst)) {
+  lst[[i]] <- rnorm(n = i)
+}
+# Crear una lista y luego aplanarla
+set_names(x = lst, nm = letters[1:3]) %>% unlist()
+```
+
+---
+
+# Variaciones de bucles *for*
+
+## Longitud de secuencia desconocida
+
+```{r}
+# Lanzar una moneda hasta que salgan 10 caras
+# Revisar el número de lanzamientos
+lanzamiento <- function() {sample(c("S", "C"), size = 1,
+                                  replace = TRUE)}
+
+lanzamientos <- 0
+ncaras <- 0
+set.seed(1234)
+while (ncaras <= 10) {
+  if (lanzamiento() == "C") {
+    ncaras <- ncaras + 1
+  } else {
+    ncaras
+  }
+  lanzamientos <- lanzamientos + 1
+}
+lanzamientos
+```
+
+---
+
+# Bucles *for* vs. funcionales
+
+- R es un lenguaje de programación funcional por lo que es posible envolver los bucles en una función
+
+--
+
+    + Base R 
+    
+        + Familia apply
+        
+            + `apply()`, `lapply()`, `sapply()`, `vapply()`, `mapply()`, `rapply()`, `tapply()`
+        
+    + Tidyverse
+    
+        + Paquete `purrr` en relación a la familia `map`
+        
+            + `map()`, `map_lgl()`, `map_chr()`, `map_int()`, `map_dbl()`,
+            `map_raw()`, `map_dfr()`, `map_dfc()`, `walk()` 
+
+---
+
+# Las funciones map
+
+En el caso de data frames se itera sobre las columnas
+
+```{r}
+dta_fr <- data.frame(x = 1:3, y = 4:6)
+unclass(dta_fr)
+```
+
+```{r}
+map(.x = dta_fr, .f = mean)
+```
+
+---
+
+# Las funciones map
+
+```{r}
+dta_fr <- data.frame(x = 1:3, y = 4:6)
+map(dta_fr, mean)
+```
+
+- `map` solo genera vectores
+
+    + Por ejemplo no genera matrices como si lo podría hacer `vapply()`
+
+```{r}
+map_dbl(dta_fr, mean) %>% is.vector(mode = "any")
+```
+
+---
+
+# Las funciones map
+
+```{r}
+fun_min_max <- function(x) {c(min = min(x), max = max(x))}
+vapply(X = dta_fr, FUN = fun_min_max, FUN.VALUE = numeric(2))
+```
+
+```{r}
+map(.x = dta_fr, .f = fun_min_max)
+```
+
+---
+
+# Manejo de errores
+
+Uso de la función `purrr::safely()` para retornar una versión modificada de una función donde se obtiene una lista con 2 elementos:
+
+- `result`: es el resultado general donde si existe un error se obtiene `NULL`
+
+- `error`: se indica el error donde si no existe un error se obtiene `NULL`
+
+```{r}
+map(.x = "a", .f = safely(.f = log) , base = exp(1))
+```
+
+---
+
+# *map* sobre múltiples argumentos
+
+En este caso es posible utilizar la familia `pmap`
+
+```{r}
+set.seed(1234)
+n <- 1:3
+mean <- c(-1, 0, 1)
+sd <- c(1, 5, 10)
+pmap(.l = list(n, mean, sd), .f = rnorm)
+```
+
+---
+
+# *map* sobre múltiples argumentos y funciones
+
+```{r}
+f <- c("runif", "rnorm", "rpois")
+param <- list(
+  list(min = -1, max = 1), 
+  list(sd = 5), 
+  list(lambda = 10))
+```
+
+```{r}
+set.seed(1234)
+exec(.fn = f[[1]], !!!param[[1]], n = 5)
+exec(.fn = f[[2]], !!!param[[2]], n = 5)
+exec(.fn = f[[3]], !!!param[[3]], n = 5)
+```
+
+---
+
+# *map* sobre múltiples argumentos y funciones
+
+```{r}
+set.seed(1234)
+map(.x = seq_along(f), 
+    .f = ~ exec(.fn = f[[.]], !!!param[[.]], n = 5))
+```
+
+--
+
+- En esta parte se utiliza `rlang::exec()` dado que `purrr::invoke_map` no se continuará desarrollando donde se recomienda el uso de `rlang::exec()`
+
+- También se utiliza el operador *big-bang*, `!!!`, que permite separar en argumentos individuales los objetos de una lista para que puedan ser incluidos cuando en una funcion existe el argumento, `...`
+
+---
+
+# Walk
+
+Si se requiere devolver de manera invisible el objeto `.x` se puede utilizar `purrr::walk()` 
+
+```{r}
+list(1, 2, 3) %>% 
+  walk(.f = print) %>% 
+  # Se puede seguir accediendo al objeto 
+  # .x = list(1, 2, 3) despues de utilizar 
+  # walk
+  length()
+```
+
+---
+
+# Otros patrones para los bucles *for*
+
+- Funciones predictivas
+
+    + `keep` y `discard`
+    + `some` y `every`
+    + `detect` y `detect_index`: no encontré una aplicación para data frames
+    + `head_while` y `tail_while`: no encontré una aplicación para data frames
+
+- Reducir y acumular
+
+    + `reduce`
+    + `accumulate`
+---
+
+# Otros patrones para los bucles *for*
+
+- Funciones predictivas
+
+```{r}
+# Aunque exister la alternativa
+# datos::flores %>% select(where(is.factor))
+datos::flores %>% keep(.p = is.factor) %>% str()
+datos::flores %>% every(.p = is.double)
+```
+
+---
+
+# Otros patrones para los bucles *for*
+
+- Reducir y acumular
+
+```{r}
+# Sirve bastante para realizar left_join a 
+# varias tibbles
+x <- tibble(id = 1:3, i = 4:6)
+y <- tibble(id = 1:3, j = 7:9)
+z <- tibble(id = 1:3, k = 10:12)
+reduce(.x = list(x, y, z), 
+       .f = left_join, by = "id", 
+       .dir = "forward")
+
+# Con accumulate se vería el proceso respecto a 
+# como se van uniendo las tibbles
+```
+
+---
+
+# References
+
+```{r refs, echo=FALSE, results='asis'}
+RefManageR::PrintBibliography(bib = mybib)
+```
