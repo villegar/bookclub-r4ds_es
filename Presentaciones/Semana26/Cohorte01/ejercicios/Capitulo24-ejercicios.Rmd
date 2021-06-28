@@ -1,0 +1,223 @@
+---
+title: "Capítulo 24: Construcción de modelos"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(modelr)
+library(lubridate)
+library(datos)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 24.2.3
+1. En el gráfico de `log_quilates` vs. `log_precio`, hay unas tiras verticales brillantes. ¿Qué representan?
+
+```{r 24-2-3-1-0, exercise = FALSE}
+diamantes2 <- diamantes %>%
+  filter(quilate <= 2.5) %>% 
+  mutate(log_precio = log2(precio), log_quilates = log2(quilate))
+ggplot(diamantes2, aes(log_quilates, log_precio)) + 
+  geom_hex(bins = 50)
+```
+
+```{r 24-2-3-1, exercise=TRUE}
+
+```
+
+2. Si `log(precio) = a_0 + a_1 * log(quilates)`, ¿Qué dice eso acerca la relación entre `precio` y `quilates`?
+
+R/
+
+$$\log(precio) = a_0 + a_1 \times \log(quilates)$$
+$$e ^ {\log(precio)} = e ^ {a_0 + a_1 \times \log(quilates)}$$
+$$precio = b_0 + b_1 \times quilates$$
+
+```{r 24-2-3-2, exercise=TRUE}
+
+```
+
+3. Extrae los diamantes que tienen residuos muy altos y muy bajos. ¿Hay algo inusual en estos diamantes? ¿Son particularmente malos o buenos?, o ¿Crees que estos son errores de precio?
+
+```{r 24-2-3-3-0, exercise = FALSE}
+diamantes2 <- diamantes %>%
+  filter(quilate <= 2.5) %>% 
+  mutate(log_precio = log2(precio), 
+         log_quilates = log2(quilate))
+mod_diamantes <- lm(log_precio ~ log_quilates, data = diamantes2)
+mod_diamantes2 <- lm(log_precio ~ log_quilates + color + corte + claridad, data = diamantes2)
+
+diamantes2 <- diamantes2 %>% 
+  add_residuals(mod_diamantes, "lresid") %>%
+  add_residuals(mod_diamantes2, "lresid2")
+
+diamantes2 %>%
+  filter(abs(lresid2) > 1) %>% 
+  add_predictions(mod_diamantes2) %>% 
+  mutate(pred = round(2 ^ pred)) %>% 
+  select(precio, pred, quilate:tabla, x:z) %>% 
+  arrange(precio)
+```
+
+```{r 24-2-3-3, exercise=TRUE}
+
+```
+
+4. ¿El modelo final, `mod_diamantes2`, hace un buen trabajo al predecir el precios de los diamantes? ¿Confiarías en lo que te indique gastar si fueras a comprar un diamante?
+
+```{r 24-2-3-4, exercise=TRUE}
+
+```
+
+
+## 24.3.5
+```{r 24.3.5, exercise = FALSE}
+vuelos_por_dia <- vuelos %>% 
+  mutate(fecha = make_date(anio, mes, dia)) %>% 
+  group_by(fecha) %>% 
+  summarise(n = n()) %>% 
+  mutate(dia_semana = wday(fecha, label = TRUE))
+mod <- lm(n ~ dia_semana, data = vuelos_por_dia)
+vuelos_por_dia <- vuelos_por_dia %>% 
+  add_residuals(mod)
+
+trimestre <- function(fecha) {
+  cut(fecha, 
+    breaks = ymd(20130101, 20130605, 20130825, 20140101),
+    labels = c("primavera", "verano", "otoño")
+  )
+}
+
+vuelos_por_dia <- vuelos_por_dia %>% 
+  mutate(trimestre = trimestre(fecha)) 
+
+ggplot(vuelos_por_dia, aes(fecha, n)) + 
+  geom_line()
+```
+
+1. Usa tus habilidades detestivescas con los buscadores para intercambiar ideas sobre por qué hubo menos vuelos esperados el 20 de enero, 26 de mayo y 1 de septiembre. (Pista: todos tienen la misma explicación.) ¿Cómo generalizarías esos días a otros años?
+
+R/
+
+* 20 de enero: Domingo antes del feriado _Martin Luther King Day_
+
+En general este feriado ocurre el 3cer lunes de Enero.
+
+* 26 de mayo: Domingo antes del feriado _Memorial Day_
+
+En general este feriado ocurre el último lunes de Mayo.
+
+* 1 de septiembre: Domingo antes del feriado _Labor Day_
+
+En general este feriado ocurre el 1er lunes de Septiembre.
+
+
+2. ¿Qué representan esos tres días con altos residuos positivos? ¿Cómo se generalizarían esos días a otros años?
+
+```{r 24-3-5-2, exercise=FALSE}
+vuelos_por_dia %>% 
+  slice_max(n = 3, resid)
+```
+
+R/ 
+
+* 2013-11-30: Sábado después de Acción de Gracias (2013-11-28).
+
+* 2013-12-01: Lunes después de Acción de Gracias (2013-11-28).
+
+* 2013-12-28: Sábado después de Navidad.
+
+3. Crea una nueva variable que divida la variable `dia_semana` en periodos, pero sólo para sábados, es decir, debería tener `Thu`, `Fri`, y `Sat-verano`, `Sat-primavera`, `Sat-otonio`. ¿Cómo este modelo se compara con el modelo que tiene la combinación de `dia_semana` y `trimestre`?
+
+R/
+```{r 24-3-5-3, exercise=TRUE}
+vuelos_por_dia <- vuelos_por_dia %>% 
+  mutate(dia_semana2 = case_when(dia_semana == "Sat" & trimestre == "verano" ~ "Sat-verano", 
+                                 dia_semana == "Sat" & trimestre == "primavera" ~ "Sat-primavera",
+                                 dia_semana == "Sat" & trimestre == "otonio" ~ "Sat-otonio",
+                                 TRUE ~ as.character(dia_semana)))
+vuelos_por_dia
+
+mod2 <- lm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+mod3 <- lm(n ~ dia_semana2, data = vuelos_por_dia)
+
+vuelos_por_dia %>% 
+  gather_residuals(sab_trimestre = mod3, con_trimestre = mod2) %>% 
+  ggplot(aes(fecha, resid, colour = model)) +
+    geom_line(alpha = 0.75)
+```
+
+4. Crea una nueva variable `dia_semana` que combina el día de la semana, periodos (para sábados), y feriados públicos. ¿Cómo se ven los residuos de este modelo?
+
+R/
+
+Feriados federales (2013): https://www.calendarpedia.com/holidays/federal-holidays-2013.html
+```{r 24-3-5-4, exercise=TRUE}
+feriados_2013 <-
+  tribble(
+    ~feriado, ~fecha,
+    "Anio Nuevo", "2013-01-01",
+    "Dia de Martin Luther King Jr", "2013-01-21",
+    "Dia de los Presidentes", "2013-02-18",
+    "Dia Memorial", "2013-05-27",
+    "Dia de la Independencia", "2013-07-04",
+    "Dia del Trabajador ", "2013-09-02",
+    "Dia de (Cristobal) Colon", "2013-10-28",
+    "Dia de los Veteranos (de Guerra)", "2013-11-11",
+    "Dia de Accion de Gracias", "2013-11-28",
+    "Navidad", "2013-12-25"
+    ) %>%
+  mutate(fecha = lubridate::ymd(fecha))
+vuelos_por_dia <- vuelos_por_dia %>%
+  mutate(dia_semana2 = case_when(dia_semana == "Sat" & trimestre == "verano" ~ "Sat-verano", 
+                                 dia_semana == "Sat" & trimestre == "primavera" ~ "Sat-primavera",
+                                 dia_semana == "Sat" & trimestre == "otonio" ~ "Sat-otonio",
+                                 TRUE ~ as.character(dia_semana))) %>%
+  mutate(dia_semana3 = case_when(fecha %in% feriados_2013$fecha ~ "Feriado",
+                                 TRUE ~ as.character(dia_semana2)))
+vuelos_por_dia
+
+mod2 <- lm(n ~ dia_semana * trimestre, data = vuelos_por_dia)
+mod3 <- lm(n ~ dia_semana2, data = vuelos_por_dia)
+mod4 <- lm(n ~ dia_semana3, data = vuelos_por_dia)
+
+vuelos_por_dia %>% 
+  # gather_residuals(con_feriados = mod4, sab_trimestre = mod3) %>% 
+  spread_residuals(con_feriados = mod4, sab_trimestre = mod3) %>% 
+  mutate(resid_diff = con_feriados - sab_trimestre) %>%
+  # ggplot(aes(fecha, resid, colour = model)) +
+  ggplot(aes(fecha, resid_diff)) +
+    geom_line(alpha = 0.75)
+```
+
+5. ¿Qué sucede si ajustas un efecto de día de la semana que varía según el mes o varía mes a mes (es decir, `n ~ dia_semana * mes`)? ¿Por qué esto no es muy útil?
+
+R/
+```{r 24-3-5-5, exercise=TRUE}
+vuelos_por_dia <- vuelos_por_dia %>% 
+  mutate(mes = lubridate::month(fecha))
+mod5 <- lm(n ~ dia_semana * mes, data = vuelos_por_dia)
+summary(mod5)
+```
+
+6. ¿Que esperarías del modelo `n ~ dia_semana + ns(fecha, 5)`? Sabiendo lo que sabes sobre los datos, ¿porqué esperarias que no sea particularmente efectivo?
+
+```{r 24-3-5-6, exercise=TRUE}
+mod6 <- lm(n ~ dia_semana + ns(fecha, 5), data = vuelos_por_dia)
+summary(mod6)
+```
+
+7. Presumimos que las personas que salen los domingos son probablemente viajeros de negocios quienes necesitan estar en algun lugar el lunes. Explora esa hipótesis al ver cómo se descompone en función de la distancia y tiempo: si es verdad, esperarías ver más vuelos en la tarde del domingo a lugares que estan muy lejos.
+
+```{r 24-3-5-7, exercise=TRUE}
+
+```
+
+8. Es un poco frustante que el domingo y sábado esté en los extremos opuestos del gráfico. Escribe una pequeña función para establecer los niveles del factor para que la semana comience el lunes.
+
+```{r 24-3-5-8, exercise=TRUE}
+
+```
