@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R para Ciencia de Datos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Roberto Villegas-Diaz (GH: villegar)" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R para Ciencia de Datos
+## Capítulo 7: Análisis exploratorio de datos (EDA)
+### Roberto Villegas-Diaz (GH: villegar)
+### 2021-01-26 y 2021-02-02
+
+---
+
+
+
+
+
+
+
+## Contenidos
+
+* 7.1 Introducción
+
+* 7.2 Preguntas
+
+* 7.3 Variación
+
+* 7.4 Valores faltantes
+
+* 7.5 Covariación
+
+* 7.6 Patrones y modelos
+
+* 7.7 Argumentos en ggplot2
+
+&lt;!-- * 7.8 Aprendiendo más --&gt;
+
+---
+
+## Recordatorio
+Para poder ejecutar los ejercicios en este libro, los siguientes paquetes tienen 
+que ser instalados:
+
+
+```r
+if (!require(tidyverse))
+  install.packages("tidyverse")
+if (!require(datos))
+  install.packages("datos")
+```
+
+---
+
+## 7.1 Introducción
+
+1. Generar preguntas
+2. Intentar responder usando gráficos, transformaciones y modelado.
+3. Usar lo aprendido y refinar las preguntas y/o generar nuevas interrogantes.
+
+.center[
+![:escala 80%](https://diginomica.com/sites/default/files/images/2018-07/business-path.jpg)
+]
+
+.footnote[Fuente: https://diginomica.com]
+---
+
+## 7.2 Preguntas
+
+__Preguntas útiles:__
+
+1. ¿Qué tipo de variación existe dentro de cada una de mis variables?
+
+2. ¿Qué tipo de covariación ocurre entre mis diferentes variables?
+
+
+__Vocabulario:__
+
+- Variable: unidad
+- Valor: estado
+- Observación: conjunto
+- Datos tabulares: conjunto
+
+---
+
+## 7.3 Variación
+
+.center[
+![:escala 100%](https://tinystats.github.io/teacups-giraffes-and-statistics/images/04_variance/giraffe_variance1.jpg)
+]
+
+
+.footnote[Fuente: https://tinystats.github.io]
+
+---
+
+## 7.3 Variación (2)
+
+
+```r
+ggplot(data = diamantes) +
+  geom_bar(mapping = aes(x = corte))
+```
+
+&lt;img src="figuras/unnamed-chunk-2-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.3 Variación (3)
+
+
+```r
+ggplot(data = diamantes) +
+  geom_histogram(mapping = aes(x = quilate), binwidth = 0.5)
+```
+
+&lt;img src="figuras/unnamed-chunk-3-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.3 Variación (4)
+
+
+```r
+diamantes %&gt;%
+  dplyr::count(corte)
+#&gt; # A tibble: 5 x 2
+#&gt;   corte         n
+#&gt; * &lt;ord&gt;     &lt;int&gt;
+#&gt; 1 Regular    1610
+#&gt; 2 Bueno      4906
+#&gt; 3 Muy bueno 12082
+#&gt; 4 Premium   13791
+#&gt; 5 Ideal     21551
+
+diamantes %&gt;% 
+  dplyr::count(ggplot2::cut_width(quilate, 0.5))
+#&gt; # A tibble: 11 x 2
+#&gt;   `cut_width(quilate, 0.5)`     n
+#&gt; * &lt;fct&gt;                     &lt;int&gt;
+#&gt; 1 [-0.25,0.25]                785
+#&gt; 2 (0.25,0.75]               29498
+#&gt; 3 (0.75,1.25]               15977
+#&gt; 4 (1.25,1.75]                5313
+#&gt; 5 (1.75,2.25]                2002
+#&gt; 6 (2.25,2.75]                 322
+#&gt; # … with 5 more rows
+```
+
+---
+
+## 7.3 Variación (5)
+
+
+```r
+diamantes %&gt;%
+  filter(quilate &lt; 3) %&gt;%
+  ggplot(mapping = aes(x = quilate, colour = corte)) +
+  geom_freqpoly(binwidth = 0.1)
+```
+
+&lt;img src="figuras/unnamed-chunk-5-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.3 Variación (6): Valores inusuales
+
+
+```r
+ggplot(diamantes) + 
+  geom_histogram(mapping = aes(x = y), binwidth = 0.5)
+```
+
+&lt;img src="figuras/unnamed-chunk-6-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.3 Variación (7): Valores inusuales
+
+
+```r
+ggplot(diamantes) + 
+  geom_histogram(mapping = aes(x = y), binwidth = 0.5) +
+  coord_cartesian(ylim = c(0, 50))
+```
+
+&lt;img src="figuras/unnamed-chunk-7-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.3 Variación (8): Valores inusuales
+
+
+```r
+inusual &lt;- diamantes %&gt;% 
+  filter(y &lt; 3 | y &gt; 20) %&gt;% 
+  select(precio, x, y, z) %&gt;%
+  arrange(y)
+inusual
+## # A tibble: 9 x 4
+##   precio     x     y     z
+##    &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1   5139  0      0    0   
+## 2   6381  0      0    0   
+## 3  12800  0      0    0   
+## 4  15686  0      0    0   
+## 5  18034  0      0    0   
+## 6   2130  0      0    0   
+## 7   2130  0      0    0   
+## 8   2075  5.15  31.8  5.12
+## 9  12210  8.09  58.9  8.06
+```
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.3 Variación (9): Valores inusuales --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.3 Variación (10): Valores inusuales --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.3 Variación (11): Valores inusuales --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.3 Variación (8): Valores inusuales --&gt;
+
+---
+
+### 7.3.4 Ejercicios
+1. Explora la distribución de cada una de las variables `x`, `y`, y `z`en el set de datos `diamantes`. ¿Qué aprendiste? Piensa en un diamante y cómo decidirías qué dimensiones corresponden a la longitud, ancho y profundidad.
+
+2. Explora la distribución de `precio`. ¿Ves algo inusual o sorprendente? (Sugerencia: Piensa detenidamente en `binwidth` y asegúrate de usar un rango largo de valores.)
+
+3. ¿Cuántos diamantes tienen 0.99 quilates? ¿Cuántos son de 1 quilate? ¿Qué piensas que puede ser la causa de dicha diferencia?
+
+4. Compara y contrasta `coord_cartesian()` contra `xlim()` o `ylim()` en cuanto a acercar la imagen en un histograma. ¿Qué pasa si no modificas el valor de `binwidth`? ¿Qué pasa si intentas acercar la imagen de manera que solo aparezca la mitad de una barra?
+
+---
+
+## 7.4 Valores faltantes
+
+1. Desechar observaciones (filas) con valores inusuales.
+
+  
+  ```r
+  diamantes2 &lt;- diamantes %&gt;% 
+    filter(between(y, 3, 20))
+  ```
+
+2. Reemplazar valores inusuales con valores faltantes, `NA`.
+
+  
+  ```r
+  diamantes2 &lt;- diamantes %&gt;% 
+    mutate(y = ifelse(y &lt; 3 | y &gt; 20, NA, y))
+  ```
+
+---
+
+## 7.4 Valores faltantes (2)
+
+#### if-else
+
+si `&lt;condición&gt;` hago `X`, sino hago `Y`
+
+Ejemplos:
+
+
+```r
+i &lt;- 1:10
+ifelse(i %% 2 == 0, "par", "impar")
+##  [1] "impar" "par"   "impar" "par"   "impar" "par"   "impar" "par"   "impar"
+## [10] "par"
+```
+
+---
+
+## 7.4 Valores faltantes (3)
+
+
+```r
+ggplot(data = diamantes2, mapping = aes(x = x, y = y)) + 
+  geom_point(na.rm = TRUE)
+```
+
+&lt;img src="figuras/unnamed-chunk-12-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.4 Valores faltantes (4)
+
+
+```r
+datos::vuelos %&gt;% 
+  mutate(
+    cancelados = is.na(horario_salida),
+    hora_programada = salida_programada %/% 100,
+    minuto_programado = salida_programada %% 100,
+    salida_programada = hora_programada + minuto_programado / 60
+  ) %&gt;% 
+  ggplot(mapping = aes(salida_programada)) + 
+    geom_freqpoly(mapping = aes(colour = cancelados), binwidth = 1/4)
+```
+
+&lt;img src="figuras/unnamed-chunk-13-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### 7.4.1 Ejercicios
+1. ¿Qué sucede con los valores faltantes en un histograma? ¿Qué pasa con los valores faltantes en una gráfica de barras? ¿Cuál es la razón detrás de esta diferencia?
+
+2. ¿Qué efecto tiene usar `na.rm = TRUE` en `mean()` (media) y `sum()` (suma)?
+
+
+---
+
+## 7.5 Covariación
+
+"... tendencia de los valores de dos o más variables a variar simultáneamente ..."
+
+.center[
+![:escala 40%](https://tinystats.github.io/teacups-giraffes-and-statistics/images/05_correlation/Celery.png)]
+
+.footnote[
+
+Fuente: https://tinystats.github.io
+
+__Variación:__ dentro `X`
+
+__Covariación:__ entre `X`, `Y`, `...`
+
+]
+
+---
+
+## 7.5 Covariación (2)
+
+#### Una variable categórica y una variable continua
+
+
+```r
+ggplot(data = diamantes, mapping = aes(x = precio, y = ..density..)) + 
+  geom_freqpoly(mapping = aes(colour = corte), binwidth = 500)
+```
+
+&lt;img src="figuras/unnamed-chunk-14-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.5 Covariación (3)
+
+
+```r
+ggplot(data = diamantes, mapping = aes(x = corte, y = precio)) +
+  geom_boxplot()
+```
+
+&lt;img src="figuras/unnamed-chunk-15-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.5 Covariación (4)
+
+
+```r
+ggplot(data = millas) +
+  geom_boxplot(mapping = aes(x = reorder(clase, autopista, FUN = median), y = autopista)) +
+  coord_flip()
+```
+
+&lt;img src="figuras/unnamed-chunk-16-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### 7.5.1.1 Ejercicios
+1. Usa lo que has aprendido para mejorar la visualización de los tiempos de salida de los vuelos cancelados versus los no cancelados.
+
+2. ¿Qué variable del conjunto de datos de diamantes es más importante para predecir el precio de un diamante? ¿Cómo está correlacionada esta variable con el corte? ¿Por qué la combinación de estas dos relaciones conlleva que los diamantes de menor calidad sean más costosos?
+
+3. Instala el paquete __ggstance__, y crea un diagrama de caja horizontal. ¿Cómo se compara esto a usar `coord_flip()`?
+
+4. Un problema con los diagramas de caja es que fueron desarrollados en un tiempo en que los set de datos eran más pequeños y por ende tienden a mostrar un número muy grande de “valores atípicos”. Una estrategia para remediar este problema es el diagrama __letter value__. Instala el paquete __lvplot__, e intenta usar `geom_lv()` para mostrar la distribución de precio vs corte. ¿Qué observas? ¿Cómo interpretas los gráficos?
+
+5. Compara y contrasta `geom_violin()` con un `geom_histogram()` dividido en facetas, o un `geom_freqpoly()` codificado por colores. ¿Cuáles son las ventajas y desventajas de cada método?
+
+6. Si tu set de datos es pequeño, a veces resulta útil usar `geom_jitter()` para ver la relación entre una variable continua y una categórica. El paquete `ggbeeswarm` provee de un número de métodos similares a `geom_jitter()`. Enlístalos y describe brevemente qué hace cada uno.
+
+---
+
+## 7.5 Covariación (5)
+
+#### Dos variables categóricas
+
+
+```r
+ggplot(data = diamantes) +
+  geom_count(mapping = aes(x = corte, y = color))
+```
+
+&lt;img src="figuras/unnamed-chunk-17-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.5 Covariación (6)
+
+
+```r
+diamantes %&gt;% 
+  count(color, corte) %&gt;%  
+  ggplot(mapping = aes(x = color, y = corte)) +
+    geom_tile(mapping = aes(fill = n))
+```
+
+&lt;img src="figuras/unnamed-chunk-18-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### 7.5.2.1 Ejercicios
+1. ¿Cómo podrías cambiar la escala del conjunto de datos anterior para mostrar de manera más clara la distribución del corte dentro del color, o del color dentro de la variable corte?
+
+2. Usa `geom_tile()` junto con _dplyr_ para explorar la variación del retraso promedio de los vuelos en relación al destino y mes del año. ¿Qué hace que este gráfico sea difícil de leer? ¿Cómo podrías mejorarlo?
+
+3. ¿Por qué es un poco mejor usar `aes(x = color, y = corte)` en lugar de `aes(x = corte, y = color)` en el ejemplo anterior?
+
+---
+
+## 7.5 Covariación (7)
+
+#### Dos variables continuas
+
+
+```r
+ggplot(data = diamantes) +
+  geom_point(mapping = aes(x = quilate, y = precio), alpha = 1 / 100)
+```
+
+&lt;img src="figuras/unnamed-chunk-19-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.5 Covariación (8)
+
+
+```r
+# install.packages("hexbin")
+ggplot(data = diamantes) +
+  geom_hex(mapping = aes(x = quilate, y = precio))
+```
+
+&lt;img src="figuras/unnamed-chunk-20-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## 7.5 Covariación (9)
+
+
+```r
+ggplot(data = diamantes, mapping = aes(x = quilate, y = precio)) + 
+  geom_boxplot(mapping = aes(group = cut_width(quilate, 0.1)))
+```
+
+&lt;img src="figuras/unnamed-chunk-21-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+---
+
+### 7.5.3.1 Ejercicios
+1. En lugar de resumir la distribución condicional con un diagrama de caja, podrías usar un polígono de frecuencia. ¿Qué deberías considerar cuando usas `cut_width()` en comparación con `cut_number()`? ¿Qué impacto tiene este parámetro en la visualización bidimensional de `quilate` y `precio`?
+
+2. Visualiza la distribución de `quilate`, segmentada según la variable `precio`.
+
+3. ¿Cómo es la distribución del precio de diamantes muy grandes en comparación con aquella de diamantes más pequeños? ¿Es como esperabas, o te resulta sorprendente?
+
+4. Combina dos de las técnicas que has aprendido para visualizar la distribución combinada de las variables `corte`, `quilate` y `precio`.
+
+5. Los gráficos bidimensionales revelan observaciones atípicas que podrían no ser visibles en gráficos unidimensionales. Por ejemplo, algunos puntos en la gráfica a continuación tienen una combinación inusual de valores `x` y `y`, que hace que algunos puntos sean valores atípicos aún cuando sus valores x e y parecen normales cuando son examinados de manera individual.
+
+
+```r
+ggplot(data = diamantes) +
+  geom_point(mapping = aes(x = x, y = y)) +
+  coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
+```
+
+¿Por qué es mejor usar un diagrama de dispersión que un diagrama basado en rangos en este caso?
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.5 Covariación (10) --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.5 Covariación (11) --&gt;
+
+---
+
+## 7.6 Patrones y modelos
+
+- ¿Este patrón podría ser mera coincidencia?
+
+- ¿Cómo podrías describir la relación sugerida por este patrón?
+
+- ¿Qué tan fuerte es la relación sugerida por este patrón?
+
+- ¿Qué otras variables podrían afectar la relación?
+
+- ¿Cambia esta relación si examinas de manera individual distintos subgrupos de datos?
+
+.center[
+![:escala 35%](https://images.assetsdelivery.com/compings_v2/inamar82/inamar821708/inamar82170800146.jpg)
+]
+
+.footnote[Fuente: https://images.assetsdelivery.com]
+
+---
+
+## 7.6 Patrones y modelos (2)
+
+
+```r
+ggplot(data = faithful) +
+  geom_point(mapping = aes(x = eruptions, y = waiting))
+```
+
+&lt;img src="figuras/unnamed-chunk-23-1.svg" width="100%" style="display: block; margin: auto;" /&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.6 Patrones y modelos (3) --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.6 Patrones y modelos (4) --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.6 Patrones y modelos (5) --&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.6 Patrones y modelos (6) --&gt;
+
+---
+
+## 7.7 Argumentos en ggplot2
+
+Forma explícita:
+
+
+```r
+ggplot(data = faithful, mapping = aes(x = eruptions)) +
+  geom_freqpoly(binwidth = 0.25)
+```
+
+Forma "reducida":
+
+
+```r
+ggplot(faithful, aes(eruptions)) +
+  geom_freqpoly(binwidth = 0.25)
+```
+
+Manipulación y graficación:
+
+
+```r
+diamantes %&gt;% 
+  count(corte, claridad) %&gt;% 
+  ggplot(aes(claridad, corte, fill = n)) + 
+    geom_tile()
+```
+
+&lt;!-- --- --&gt;
+
+&lt;!-- ## 7.8 Aprendiendo más --&gt;
+
+---
+class: center, inverse, middle
+
+# ¿Preguntas?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+<style>
+.logo {
+  background-image: url(https://es.r4ds.hadley.nz/hex_r4ds-es.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  width: 110px;
+  height: 128px;
+  z-index: 0;
+}
+</style>
+
+<script>
+document
+  .querySelectorAll(
+    '.remark-slide-content' +
+    ':not(.title-slide)' +
+    // add additional classes to exclude here, e.g.
+    ':not(.inverse)' +
+    ':not(.hide-logo)'
+  )
+  .forEach(el => {
+    el.innerHTML += '<div class="logo"></div>';
+  });
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
