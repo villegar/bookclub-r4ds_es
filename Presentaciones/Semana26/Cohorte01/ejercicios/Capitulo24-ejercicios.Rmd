@@ -34,7 +34,15 @@ R/
 
 $$\log(precio) = a_0 + a_1 \times \log(quilates)$$
 $$e ^ {\log(precio)} = e ^ {a_0 + a_1 \times \log(quilates)}$$
-$$precio = b_0 + b_1 \times quilates$$
+
+$$precio = e ^ {a_0} \times e ^ {a_1 \times \log(quilates)}$$
+
+
+<!-- $$precio = b_0 \times b_1 \times e ^ {\log(quilates)}$$ -->
+
+<!-- $$precio = b_0 \times b_1 \times quilates$$ -->
+
+<!-- $$precio = b_0 + b_1 \times quilates$$ -->
 
 ```{r 24-2-3-2, exercise=TRUE}
 
