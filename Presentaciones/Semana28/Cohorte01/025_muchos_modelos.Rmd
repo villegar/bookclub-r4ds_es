@@ -1,0 +1,404 @@
+---
+title: "Muchos modelos"
+subtitle: "R para ciencia de datos<br>Club de lectura<br>Capítulo 25<br>"
+author: "Luis Francisco Gomez Lopez"
+date: "2021-07-03 10:03:21 GMT -05:00"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, 
+        htmltools.preserve.raw = FALSE)
+knitr::opts_chunk$set(echo      = TRUE, 
+                      fig.align = "center")
+```
+
+```{r libraries, include=FALSE}
+library(tidyverse)
+library(datos)
+library(RefManageR)
+library(modelr)
+library(broom)
+```
+
+```{r load_references, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(
+  check.entries = FALSE,
+  bib.style     = "authoryear",
+  cite.style    = "authoryear",
+  style         = "markdown",
+  hyperlink     = FALSE,
+  dashed        = FALSE
+)
+
+mybib <- RefManageR::ReadBib(file  = "./R_for_data_science.bib",
+                             check = FALSE)
+```
+
+# ¿Qué aprenderás?
+
+En **`r Citet(mybib, "grolemund_r_2019")` Capítulo 25** se abarcará:
+
+- El uso de modelos simples para entender un conjunto de datos complejos
+
+- Usar columnas-listas para almacenar estructuras de datos
+
+- Transformar modelos en datos ordenados utilizando el paquete `broom`<sup>1</sup>
+
+
+.footnote[
+
+[1] Ver el paquete [`broom`](https://broom.tidymodels.org/)
+
+]
+
+---
+
+# Gapminder
+
+- ¿Cómo la esperanza de vida (`esperanza_de_vida`) cambia a través del tiempo (`anio`) para cada país (`pais`)?
+
+```{r}
+datos::paises
+```
+
+---
+
+# Gapminder
+
+- Primera forma de "atacar" el problema: graficar todos los datos
+
+```{r , fig.height=7, fig.width=14}
+ggplot(paises) + 
+  geom_line(aes(anio, esperanza_de_vida, group = pais))
+```
+
+---
+
+# Gapminder
+
+- Segunda forma de "atacar" el problema: revisar un pais y modelar
+    
+```{r}
+col <- filter(paises, pais == "Colombia") #<<
+mod <- lm(data = col, formula = esperanza_de_vida ~ anio) #<<
+g1 <- broom::augment(mod) %>% #<<
+  select(anio:.resid, esperanza_de_vida) %>% 
+  pivot_longer(cols = .fitted:esperanza_de_vida, 
+               names_to = "component_mod") %>%
+  ggplot(aes(anio, value)) +
+  geom_line() + 
+  facet_wrap(vars(component_mod), scales = "free_y",
+             labeller = labeller( component_mod = 
+               c(esperanza_de_vida = "Datos completos",
+                 .fitted = "Tendencia lineal",
+                 .resid = "Residuos")
+             )) + 
+  theme(strip.text = element_text(size = 25),
+        axis.text.y = element_text(size = 20))
+```
+
+---
+
+# Gapminder
+
+- Segunda forma de "atacar" el problema: revisar un pais y modelar
+    
+```{r echo=FALSE, fig.height=8, fig.width=14}
+g1
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + La columna `data` es una lista donde cada elemento es una `tibble`
+
+```{r}
+por_pais <- group_by(paises, pais, continente) %>% 
+  tidyr::nest() %>% #<<
+  ungroup() 
+
+por_pais %>% 
+  slice_head(n = 5)
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Debido a que la columna `data` es una lista podemos utilizar `purrr::map()` junto a `dplyr::mutate()`
+
+```{r}
+por_pais <- por_pais %>% 
+  mutate(modelo = map(data, #<<
+                      .f = ~ lm(data = ., #<< 
+                                formula = esperanza_de_vida ~ anio) #<<
+                      )
+         )
+
+por_pais %>% 
+  slice_head(n = 3)
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Podemos calcular los residuos y desanidar las variables de interés
+    
+```{r}
+por_pais <- por_pais %>% 
+  mutate(residuos = map(modelo, #<<
+                        .f = ~ broom::augment(.)$.resid)) #<<
+
+por_pais %>% 
+  slice_head(n = 5)
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Podemos calcular los residuos, las predicciones y desanidar las variables de interés
+    
+```{r}
+residuos <- por_pais %>% 
+  tidyr::unnest(c(data, residuos)) #<<
+
+residuos %>% select(pais:pib_per_capita, residuos) %>% 
+  glimpse()
+```
+
+---
+
+# Gapminder
+
+```{r, message=FALSE, fig.height=7, fig.width=14}
+g2 <- ggplot(residuos, aes(anio, residuos)) + 
+  geom_line(aes(group = pais)) +
+  geom_hline(yintercept = 0, color = "red") + 
+  geom_smooth(se = FALSE)
+g2
+```
+
+---
+
+# Gapminder
+
+- El gráfico nos muestra que debemos revisar el modelo para los países que pertenecen a los continentes de África y Asia
+
+```{r message=FALSE, fig.height=7, fig.width=14}
+g3 <- g2 + facet_wrap(vars(continente))
+g3
+```
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el $R^2$
+
+```{r}
+r_cuadrado <- por_pais %>% 
+  mutate(r_2 = map(modelo, #<<
+                   .f = ~ broom::glance(.)$r.squared)) %>% #<<
+  unnest(r_2)
+
+glimpse(r_cuadrado)
+```
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el $R^2$
+
+```{r}
+r_cuadrado %>% 
+  arrange(r_2) %>% 
+  select(pais, continente, r_2)
+```
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el $R^2$
+
+```{r , fig.height=7, fig.width=14}
+ggplot(r_cuadrado, aes(continente, r_2)) + 
+  geom_point(aes(fill = continente), shape = 21, color = "black",
+             size = 5, position = position_jitter(width = 0.1))
+```
+
+---
+
+# Gapminder
+
+- 6 paises con menor $R^2$
+
+```{r echo=FALSE, fig.height=9, fig.width=14}
+
+ g4 <- r_cuadrado %>% 
+   slice_min(order_by = r_2, n = 6) %>% 
+   unnest(data) %>% 
+   select(pais:esperanza_de_vida) %>% 
+   ggplot(aes(anio, esperanza_de_vida)) + 
+   geom_line(aes(group = pais, color = pais)) + 
+   geom_vline(xintercept = 1982, color = "red") + 
+   geom_vline(xintercept = 1992, color = "red")
+ 
+g4
+```
+
+---
+
+# Creando columnas-lista
+
+- Problemas con una data.frame
+
+```{r}
+data.frame(x = list(1:3, 4:6))
+```
+
+```{r error=TRUE}
+data.frame(x = list(1:3,  
+                    4:5)) #<<
+```
+
+
+```{r }
+data.frame(x = I(list(1:3, 4:5)))
+```
+
+---
+
+# Creando columnas-lista
+
+- Solución a través de una tibble
+
+    + Se mejora el problema de imprimir el objeto y que pueda ser entendido por el usuario final
+
+```{r}
+tibble(x = list(1:3, 4:5))
+```
+
+- La creación de columnas-lista se puede realizar utilizando:
+
+    + Anidación
+    + Funciones vectorizadas
+    + Medidas de resumen con más de un valor
+    + Listas nombradas y `tibble::enframe()`
+
+---
+
+# Creando columnas-lista
+
+- Anidación
+
+```{r}
+paises %>% 
+  # Nombrar la variable que continene la anidación #<<
+  nest(data = anio:pib_per_capita) #<<
+```
+
+---
+
+# Creando columnas-lista
+
+- Funciones vectorizadas
+
+```{r}
+tibble(x = c("a,b,c", "d,e")) %>% 
+  mutate(x_split = stringr::str_split(string = x, 
+                                      pattern = ","))
+```
+
+---
+
+# Creando columnas-lista
+
+- Medidas de resumen con más de un valor
+
+```{r}
+probs <- seq(0, 1, 0.25)
+
+group_by(paises, continente) %>% 
+  summarize(probabilidades = list(probs), #<<
+            q_esperanza_de_vida = list(quantile(esperanza_de_vida, #<< 
+                                                probs))) #<<
+```
+
+---
+
+# Creando columnas-lista
+
+- Listas nombradas y `tibble::enframe()`
+
+```{r}
+lst <- list(a = 1:3, b = 4:5)
+tibble::enframe(lst) #<<
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Lista a vector: `map_lgl()`, `map_int()`, `map_dbl()`, y `map_chr()`
+- Desanidando: `tidyr::unnest`
+
+## Ejemplo
+
+```{r}
+r_cuadrado_anidado <- por_pais %>% 
+  mutate(r_2 = map(modelo,
+                   .f = ~ broom::glance(.)$r.squared))
+r_cuadrado_anidado %>% slice_head(n = 5)
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Lista a vector
+
+```{r}
+por_pais %>% 
+  mutate(r_2 = map_dbl(modelo, #<<
+                   .f = ~ broom::glance(.)$r.squared))
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Desanidando
+
+```{r}
+r_cuadrado_anidado %>% 
+  unnest(r_2) #<<
+```
+
+
+---
+
+# Referencias
+
+```{r refs, echo=FALSE, results='asis'}
+RefManageR::PrintBibliography(bib = mybib)
+```
