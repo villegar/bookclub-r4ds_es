@@ -1,0 +1,42 @@
+---
+title: "R para Ciencia de Datos"
+subtitle: "Capítulo 26: Comunicar - Introducción"
+author: "Roberto Villegas-Diaz (GH: villegar)"
+date: 2020-07-13
+output:
+  xaringan::moon_reader:
+    nature:
+      highlightLines: true
+      beforeInit: macros.js
+    lib_dir: libs
+    css: xaringan-themer.css
+    includes:
+      after_body: insertar-r4ds-es-logo.html
+---
+
+
+```{r xaringan-themer, include = FALSE}
+xaringanthemer::style_mono_light(
+  base_color = "#0099D8",#"#3092FF",
+  header_font_google = xaringanthemer::google_font("Josefin Sans"),
+  text_font_google   = xaringanthemer::google_font("Montserrat", "300", "300i"),
+  code_font_google   = xaringanthemer::google_font("Droid Mono")
+)
+```
+## Introducción
+
+> ... no importa lo bien que esté hecho tu análisis si no puedes explicarlo de manera sencilla a otros: es decir, que es necesario comunicar tus resultados.
+
+.center[
+![](https://es.r4ds.hadley.nz/diagrams_w_text_as_path/es/data-science-communicate.svg)
+]
+
+--
+
+> Desafortunadamente, estos capítulos se enfocan principalmente en la parte técnica de la comunicación, y no en los verdaderos grandes problemas de comunicar tus pensamientos a otras personas. 
+
+---
+
+class: center, inverse, middle
+
+# ¿Preguntas?
