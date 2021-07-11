@@ -38,7 +38,7 @@ datos::paises %>%
              position = position_jitter(width = 0.1))
 
 # Mejora un poco con relación al modelo lineal
-# Los residuos postivios disminuyen
+# Los residuos positivos disminuyen
 # El R2 es más alto para algunos países
 # Sin embargo se sigue presentando el problema 
 # con países de algunos países de África y Asia
