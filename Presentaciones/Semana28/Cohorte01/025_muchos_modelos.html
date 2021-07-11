@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Muchos modelos</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Luis Francisco Gomez Lopez" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Muchos modelos
+## R para ciencia de datos<br>Club de lectura<br>Capítulo 25<br>
+### Luis Francisco Gomez Lopez
+### 2021-07-03 10:03:21 GMT -05:00
+
+---
+
+
+
+
+
+
+
+
+# ¿Qué aprenderás?
+
+En **Grolemund and Wickham (2019) Capítulo 25** se abarcará:
+
+- El uso de modelos simples para entender un conjunto de datos complejos
+
+- Usar columnas-listas para almacenar estructuras de datos
+
+- Transformar modelos en datos ordenados utilizando el paquete `broom`&lt;sup&gt;1&lt;/sup&gt;
+
+
+.footnote[
+
+[1] Ver el paquete [`broom`](https://broom.tidymodels.org/)
+
+]
+
+---
+
+# Gapminder
+
+- ¿Cómo la esperanza de vida (`esperanza_de_vida`) cambia a través del tiempo (`anio`) para cada país (`pais`)?
+
+
+```r
+datos::paises
+```
+
+```
+## # A tibble: 1,704 x 6
+##    pais       continente  anio esperanza_de_vida poblacion pib_per_capita
+##    &lt;fct&gt;      &lt;fct&gt;      &lt;int&gt;             &lt;dbl&gt;     &lt;int&gt;          &lt;dbl&gt;
+##  1 Afganistán Asia        1952              28.8   8425333           779.
+##  2 Afganistán Asia        1957              30.3   9240934           821.
+##  3 Afganistán Asia        1962              32.0  10267083           853.
+##  4 Afganistán Asia        1967              34.0  11537966           836.
+##  5 Afganistán Asia        1972              36.1  13079460           740.
+##  6 Afganistán Asia        1977              38.4  14880372           786.
+##  7 Afganistán Asia        1982              39.9  12881816           978.
+##  8 Afganistán Asia        1987              40.8  13867957           852.
+##  9 Afganistán Asia        1992              41.7  16317921           649.
+## 10 Afganistán Asia        1997              41.8  22227415           635.
+## # … with 1,694 more rows
+```
+
+---
+
+# Gapminder
+
+- Primera forma de "atacar" el problema: graficar todos los datos
+
+
+```r
+ggplot(paises) + 
+  geom_line(aes(anio, esperanza_de_vida, group = pais))
+```
+
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Gapminder
+
+- Segunda forma de "atacar" el problema: revisar un pais y modelar
+    
+
+```r
+*col &lt;- filter(paises, pais == "Colombia")
+*mod &lt;- lm(data = col, formula = esperanza_de_vida ~ anio)
+*g1 &lt;- broom::augment(mod) %&gt;%
+  select(anio:.resid, esperanza_de_vida) %&gt;% 
+  pivot_longer(cols = .fitted:esperanza_de_vida, 
+               names_to = "component_mod") %&gt;%
+  ggplot(aes(anio, value)) +
+  geom_line() + 
+  facet_wrap(vars(component_mod), scales = "free_y",
+             labeller = labeller( component_mod = 
+               c(esperanza_de_vida = "Datos completos",
+                 .fitted = "Tendencia lineal",
+                 .resid = "Residuos")
+             )) + 
+  theme(strip.text = element_text(size = 25),
+        axis.text.y = element_text(size = 20))
+```
+
+---
+
+# Gapminder
+
+- Segunda forma de "atacar" el problema: revisar un pais y modelar
+    
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + La columna `data` es una lista donde cada elemento es una `tibble`
+
+
+```r
+por_pais &lt;- group_by(paises, pais, continente) %&gt;% 
+* tidyr::nest() %&gt;%
+  ungroup() 
+
+por_pais %&gt;% 
+  slice_head(n = 5)
+```
+
+```
+## # A tibble: 5 x 3
+##   pais       continente data             
+##   &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;           
+## 1 Afganistán Asia       &lt;tibble [12 × 4]&gt;
+## 2 Albania    Europa     &lt;tibble [12 × 4]&gt;
+## 3 Argelia    África     &lt;tibble [12 × 4]&gt;
+## 4 Angola     África     &lt;tibble [12 × 4]&gt;
+## 5 Argentina  Américas   &lt;tibble [12 × 4]&gt;
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Debido a que la columna `data` es una lista podemos utilizar `purrr::map()` junto a `dplyr::mutate()`
+
+
+```r
+por_pais &lt;- por_pais %&gt;% 
+* mutate(modelo = map(data,
+*                     .f = ~ lm(data = .,
+*                               formula = esperanza_de_vida ~ anio)
+                      )
+         )
+
+por_pais %&gt;% 
+  slice_head(n = 3)
+```
+
+```
+## # A tibble: 3 x 4
+##   pais       continente data              modelo
+##   &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;            &lt;list&gt;
+## 1 Afganistán Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;  
+## 2 Albania    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;  
+## 3 Argelia    África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Podemos calcular los residuos y desanidar las variables de interés
+    
+
+```r
+por_pais &lt;- por_pais %&gt;% 
+* mutate(residuos = map(modelo,
+*                       .f = ~ broom::augment(.)$.resid))
+
+por_pais %&gt;% 
+  slice_head(n = 5)
+```
+
+```
+## # A tibble: 5 x 5
+##   pais       continente data              modelo residuos  
+##   &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;            &lt;list&gt; &lt;list&gt;    
+## 1 Afganistán Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt;
+## 2 Albania    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt;
+## 3 Argelia    África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt;
+## 4 Angola     África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt;
+## 5 Argentina  Américas   &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt;
+```
+
+---
+
+# Gapminder
+
+- Tercer forma de "atacar" el problema: datos anidados, columnas-lista y desanidado
+
+    + Podemos calcular los residuos, las predicciones y desanidar las variables de interés
+    
+
+```r
+residuos &lt;- por_pais %&gt;% 
+* tidyr::unnest(c(data, residuos))
+
+residuos %&gt;% select(pais:pib_per_capita, residuos) %&gt;% 
+  glimpse()
+```
+
+```
+## Rows: 1,704
+## Columns: 7
+## $ pais              &lt;fct&gt; "Afganistán", "Afganistán", "Afganistán", "Afganistá…
+## $ continente        &lt;fct&gt; Asia, Asia, Asia, Asia, Asia, Asia, Asia, Asia, Asia…
+## $ anio              &lt;int&gt; 1952, 1957, 1962, 1967, 1972, 1977, 1982, 1987, 1992…
+## $ esperanza_de_vida &lt;dbl&gt; 28.801, 30.332, 31.997, 34.020, 36.088, 38.438, 39.8…
+## $ poblacion         &lt;int&gt; 8425333, 9240934, 10267083, 11537966, 13079460, 1488…
+## $ pib_per_capita    &lt;dbl&gt; 779.4453, 820.8530, 853.1007, 836.1971, 739.9811, 78…
+## $ residuos          &lt;dbl&gt; -1.10629487, -0.95193823, -0.66358159, -0.01722494, …
+```
+
+---
+
+# Gapminder
+
+
+```r
+g2 &lt;- ggplot(residuos, aes(anio, residuos)) + 
+  geom_line(aes(group = pais)) +
+  geom_hline(yintercept = 0, color = "red") + 
+  geom_smooth(se = FALSE)
+g2
+```
+
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Gapminder
+
+- El gráfico nos muestra que debemos revisar el modelo para los países que pertenecen a los continentes de África y Asia
+
+
+```r
+g3 &lt;- g2 + facet_wrap(vars(continente))
+g3
+```
+
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el `\(R^2\)`
+
+
+```r
+r_cuadrado &lt;- por_pais %&gt;% 
+* mutate(r_2 = map(modelo,
+*                  .f = ~ broom::glance(.)$r.squared)) %&gt;%
+  unnest(r_2)
+
+glimpse(r_cuadrado)
+```
+
+```
+## Rows: 142
+## Columns: 6
+## $ pais       &lt;fct&gt; "Afganistán", "Albania", "Argelia", "Angola", "Argentina", …
+## $ continente &lt;fct&gt; Asia, Europa, África, África, Américas, Oceanía, Europa, As…
+## $ data       &lt;list&gt; [&lt;tbl_df[12 x 4]&gt;], [&lt;tbl_df[12 x 4]&gt;], [&lt;tbl_df[12 x 4]&gt;]…
+## $ modelo     &lt;list&gt; [-507.5342716, 0.2753287, -1.10629487, -0.95193823, -0.663…
+## $ residuos   &lt;list&gt; &lt;-1.10629487, -0.95193823, -0.66358159, -0.01722494, 0.674…
+## $ r_2        &lt;dbl&gt; 0.9477123, 0.9105778, 0.9851172, 0.8878146, 0.9955681, 0.97…
+```
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el `\(R^2\)`
+
+
+```r
+r_cuadrado %&gt;% 
+  arrange(r_2) %&gt;% 
+  select(pais, continente, r_2)
+```
+
+```
+## # A tibble: 142 x 3
+##    pais                            continente    r_2
+##    &lt;fct&gt;                           &lt;fct&gt;       &lt;dbl&gt;
+##  1 Ruanda                          África     0.0172
+##  2 Botswana                        África     0.0340
+##  3 Zimbabue                        África     0.0562
+##  4 Zambia                          África     0.0598
+##  5 Swazilandia                     África     0.0682
+##  6 Lesoto                          África     0.0849
+##  7 Costa de Marfil                 África     0.283 
+##  8 Sudáfrica                       África     0.312 
+##  9 Uganda                          África     0.342 
+## 10 República Democrática del Congo África     0.348 
+## # … with 132 more rows
+```
+
+---
+
+# Gapminder
+
+- También podemos revisar el modelo utilizando como métrica el `\(R^2\)`
+
+
+```r
+ggplot(r_cuadrado, aes(continente, r_2)) + 
+  geom_point(aes(fill = continente), shape = 21, color = "black",
+             size = 5, position = position_jitter(width = 0.1))
+```
+
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Gapminder
+
+- 6 paises con menor `\(R^2\)`
+
+&lt;img src="025_muchos_modelos_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Creando columnas-lista
+
+- Problemas con una data.frame
+
+
+```r
+data.frame(x = list(1:3, 4:6))
+```
+
+```
+##   x.1.3 x.4.6
+## 1     1     4
+## 2     2     5
+## 3     3     6
+```
+
+
+```r
+data.frame(x = list(1:3,  
+*                   4:5))
+```
+
+```
+## Error in (function (..., row.names = NULL, check.rows = FALSE, check.names = TRUE, : arguments imply differing number of rows: 3, 2
+```
+
+
+
+```r
+data.frame(x = I(list(1:3, 4:5)))
+```
+
+```
+##         x
+## 1 1, 2, 3
+## 2    4, 5
+```
+
+---
+
+# Creando columnas-lista
+
+- Solución a través de una tibble
+
+    + Se mejora el problema de imprimir el objeto y que pueda ser entendido por el usuario final
+
+
+```r
+tibble(x = list(1:3, 4:5))
+```
+
+```
+## # A tibble: 2 x 1
+##   x        
+##   &lt;list&gt;   
+## 1 &lt;int [3]&gt;
+## 2 &lt;int [2]&gt;
+```
+
+- La creación de columnas-lista se puede realizar utilizando:
+
+    + Anidación
+    + Funciones vectorizadas
+    + Medidas de resumen con más de un valor
+    + Listas nombradas y `tibble::enframe()`
+
+---
+
+# Creando columnas-lista
+
+- Anidación
+
+
+```r
+paises %&gt;% 
+* # Nombrar la variable que continene la anidación
+* nest(data = anio:pib_per_capita)
+```
+
+```
+## # A tibble: 142 x 3
+##    pais       continente data             
+##    &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;           
+##  1 Afganistán Asia       &lt;tibble [12 × 4]&gt;
+##  2 Albania    Europa     &lt;tibble [12 × 4]&gt;
+##  3 Argelia    África     &lt;tibble [12 × 4]&gt;
+##  4 Angola     África     &lt;tibble [12 × 4]&gt;
+##  5 Argentina  Américas   &lt;tibble [12 × 4]&gt;
+##  6 Australia  Oceanía    &lt;tibble [12 × 4]&gt;
+##  7 Austria    Europa     &lt;tibble [12 × 4]&gt;
+##  8 Baréin     Asia       &lt;tibble [12 × 4]&gt;
+##  9 Bangladesh Asia       &lt;tibble [12 × 4]&gt;
+## 10 Bélgica    Europa     &lt;tibble [12 × 4]&gt;
+## # … with 132 more rows
+```
+
+---
+
+# Creando columnas-lista
+
+- Funciones vectorizadas
+
+
+```r
+tibble(x = c("a,b,c", "d,e")) %&gt;% 
+  mutate(x_split = stringr::str_split(string = x, 
+                                      pattern = ","))
+```
+
+```
+## # A tibble: 2 x 2
+##   x     x_split  
+##   &lt;chr&gt; &lt;list&gt;   
+## 1 a,b,c &lt;chr [3]&gt;
+## 2 d,e   &lt;chr [2]&gt;
+```
+
+---
+
+# Creando columnas-lista
+
+- Medidas de resumen con más de un valor
+
+
+```r
+probs &lt;- seq(0, 1, 0.25)
+
+group_by(paises, continente) %&gt;% 
+* summarize(probabilidades = list(probs),
+*           q_esperanza_de_vida = list(quantile(esperanza_de_vida,
+*                                               probs)))
+```
+
+```
+## # A tibble: 5 x 3
+##   continente probabilidades q_esperanza_de_vida
+##   &lt;fct&gt;      &lt;list&gt;         &lt;list&gt;             
+## 1 África     &lt;dbl [5]&gt;      &lt;dbl [5]&gt;          
+## 2 Américas   &lt;dbl [5]&gt;      &lt;dbl [5]&gt;          
+## 3 Asia       &lt;dbl [5]&gt;      &lt;dbl [5]&gt;          
+## 4 Europa     &lt;dbl [5]&gt;      &lt;dbl [5]&gt;          
+## 5 Oceanía    &lt;dbl [5]&gt;      &lt;dbl [5]&gt;
+```
+
+---
+
+# Creando columnas-lista
+
+- Listas nombradas y `tibble::enframe()`
+
+
+```r
+lst &lt;- list(a = 1:3, b = 4:5)
+*tibble::enframe(lst)
+```
+
+```
+## # A tibble: 2 x 2
+##   name  value    
+##   &lt;chr&gt; &lt;list&gt;   
+## 1 a     &lt;int [3]&gt;
+## 2 b     &lt;int [2]&gt;
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Lista a vector: `map_lgl()`, `map_int()`, `map_dbl()`, y `map_chr()`
+- Desanidando: `tidyr::unnest`
+
+## Ejemplo
+
+
+```r
+r_cuadrado_anidado &lt;- por_pais %&gt;% 
+  mutate(r_2 = map(modelo,
+                   .f = ~ broom::glance(.)$r.squared))
+r_cuadrado_anidado %&gt;% slice_head(n = 5)
+```
+
+```
+## # A tibble: 5 x 6
+##   pais       continente data              modelo residuos   r_2      
+##   &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;            &lt;list&gt; &lt;list&gt;     &lt;list&gt;   
+## 1 Afganistán Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; &lt;dbl [1]&gt;
+## 2 Albania    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; &lt;dbl [1]&gt;
+## 3 Argelia    África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; &lt;dbl [1]&gt;
+## 4 Angola     África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; &lt;dbl [1]&gt;
+## 5 Argentina  Américas   &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; &lt;dbl [1]&gt;
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Lista a vector
+
+
+```r
+por_pais %&gt;% 
+* mutate(r_2 = map_dbl(modelo,
+                   .f = ~ broom::glance(.)$r.squared))
+```
+
+```
+## # A tibble: 142 x 6
+##    pais       continente data              modelo residuos     r_2
+##    &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;            &lt;list&gt; &lt;list&gt;     &lt;dbl&gt;
+##  1 Afganistán Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.948
+##  2 Albania    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.911
+##  3 Argelia    África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.985
+##  4 Angola     África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.888
+##  5 Argentina  Américas   &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.996
+##  6 Australia  Oceanía    &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.980
+##  7 Austria    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.992
+##  8 Baréin     Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.967
+##  9 Bangladesh Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.989
+## 10 Bélgica    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.995
+## # … with 132 more rows
+```
+
+---
+
+# Simplificando columnas-lista
+
+- Desanidando
+
+
+```r
+r_cuadrado_anidado %&gt;% 
+* unnest(r_2)
+```
+
+```
+## # A tibble: 142 x 6
+##    pais       continente data              modelo residuos     r_2
+##    &lt;fct&gt;      &lt;fct&gt;      &lt;list&gt;            &lt;list&gt; &lt;list&gt;     &lt;dbl&gt;
+##  1 Afganistán Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.948
+##  2 Albania    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.911
+##  3 Argelia    África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.985
+##  4 Angola     África     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.888
+##  5 Argentina  Américas   &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.996
+##  6 Australia  Oceanía    &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.980
+##  7 Austria    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.992
+##  8 Baréin     Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.967
+##  9 Bangladesh Asia       &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.989
+## 10 Bélgica    Europa     &lt;tibble [12 × 4]&gt; &lt;lm&gt;   &lt;dbl [12]&gt; 0.995
+## # … with 132 more rows
+```
+
+
+---
+
+# Referencias
+
+Grolemund, G. and H. Wickham (2019). _R para Ciencia de Datos_. URL:
+[http://es.r4ds.hadley.nz/](http://es.r4ds.hadley.nz/) (visited on Jan.
+06, 2021).
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
